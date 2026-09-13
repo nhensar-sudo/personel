@@ -1215,7 +1215,10 @@
           if (!isNaN(d)) {
             dateText = d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', weekday: 'long' });
           }
-          html += `<div class="exam-card"><strong>${e.branch}</strong> — ${e.sinavNo}. Sınav<div class="time-badge">${dateText}</div></div>`;
+          html += `<div class="exam-card" style="position:relative;">
+            <strong>${e.branch}</strong> — ${e.sinavNo}. Sınav<div class="time-badge">${dateText}</div>
+            <button onclick="deleteExam('${e.id}')" style="position:absolute; right:10px; top:10px; background:none; border:none; color:var(--danger); font-size:0.78rem; cursor:pointer; font-weight:700;">Sil</button>
+          </div>`;
         });
       });
       div.innerHTML = html;
@@ -1238,9 +1241,28 @@
       db.collection('exams').doc(docId).set({ class: cls, branch, donem, sinavNo, date })
         .then(() => {
           resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">✅ Sınav kaydedildi ve tüm kullanıcılara yansıtıldı.</div>`;
+          if (!examsCache[cls]) examsCache[cls] = [];
+          const idx = examsCache[cls].findIndex(e => e.id === docId);
+          const record = { id: docId, class: cls, branch, donem, sinavNo, date };
+          if (idx >= 0) examsCache[cls][idx] = record; else examsCache[cls].push(record);
+          renderExamsForClass();
         })
         .catch(err => {
           resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Kaydedilemedi: ${err.message}</div>`;
+        });
+    }
+
+    function deleteExam(id) {
+      if (!confirm('Bu sınav tarihini silmek istediğinize emin misiniz?')) return;
+      db.collection('exams').doc(id).delete()
+        .then(() => {
+          Object.keys(examsCache).forEach(cls => {
+            examsCache[cls] = examsCache[cls].filter(e => e.id !== id);
+          });
+          renderExamsForClass();
+        })
+        .catch(err => {
+          alert('Silinemedi: ' + err.message);
         });
     }
 
