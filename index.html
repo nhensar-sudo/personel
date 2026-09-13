@@ -11,12 +11,12 @@
   <style>
     :root {
       --primary-color: #1e3a8a;
-      --secondary-color: #3b82f6;
+      --secondary-color: #2563eb;
       --bg-color: #f8fafc;
       --card-bg: #ffffff;
       --text-main: #0f172a;
-      --accent-red: #ef4444;
-      --accent-green: #10b981;
+      --accent-red: #dc2626;
+      --border-color: #e2e8f0;
     }
 
     * {
@@ -52,15 +52,16 @@
       font-family: 'Playfair Display', serif;
       font-style: italic;
       font-weight: 900;
-      font-size: 2.5rem;
+      font-size: 2.6rem;
       color: var(--primary-color);
+      letter-spacing: -0.5px;
     }
 
     header p {
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       color: #64748b;
       margin-top: 2px;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .menu-grid {
@@ -72,14 +73,15 @@
     .card {
       background: var(--card-bg);
       border-radius: 16px;
-      padding: 20px;
+      padding: 22px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.05);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border-color);
       user-select: none;
+      transition: transform 0.15s ease;
     }
 
     .card:active {
@@ -91,18 +93,18 @@
       font-family: 'Playfair Display', serif;
       font-style: italic;
       font-weight: 700;
-      font-size: 1.25rem;
+      font-size: 1.3rem;
       color: var(--primary-color);
     }
 
     .card-sub {
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       color: #64748b;
       margin-top: 4px;
     }
 
     .card-icon {
-      font-size: 1.8rem;
+      font-size: 2rem;
       background: #eff6ff;
       padding: 10px;
       border-radius: 12px;
@@ -114,17 +116,17 @@
       border-radius: 16px;
       padding: 20px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border-color);
     }
 
     .btn-back {
       background: #f1f5f9;
       color: #334155;
       border: 1px solid #cbd5e1;
-      padding: 10px 16px;
-      border-radius: 10px;
+      padding: 8px 14px;
+      border-radius: 8px;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       cursor: pointer;
       margin-bottom: 16px;
       display: inline-block;
@@ -147,7 +149,7 @@
       padding: 12px;
       border: 1px solid #cbd5e1;
       border-radius: 10px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       background: #fff;
     }
 
@@ -156,7 +158,7 @@
       background: var(--primary-color);
       color: white;
       border: none;
-      padding: 14px;
+      padding: 13px;
       border-radius: 10px;
       font-weight: 600;
       font-size: 1rem;
@@ -180,7 +182,7 @@
 
     .duty-card {
       background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border-color);
       border-radius: 10px;
       padding: 14px;
       margin-top: 10px;
@@ -190,7 +192,6 @@
       font-weight: 700;
       color: var(--primary-color);
       font-size: 0.85rem;
-      letter-spacing: 0.5px;
     }
 
     .duty-name {
@@ -218,7 +219,7 @@
       <p>Yağcıllı Ortaokulu</p>
     </header>
 
-    <!-- ANA MENÜ -->
+    <!-- ANA SAYFA -->
     <div id="home-view" class="menu-grid">
       <div class="card" onclick="openPage('teachers-view')">
         <div>
@@ -237,10 +238,10 @@
       </div>
     </div>
 
-    <!-- ÖĞRETMEN SORGULAMA -->
+    <!-- ÖĞRETMEN DERS SORGULAMA -->
     <div id="teachers-view" class="view">
       <button class="btn-back" onclick="openPage('home-view')">← Ana Sayfa</button>
-      <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 14px; font-size: 1.4rem;">Öğretmen Ders Konumu</h2>
+      <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 14px; font-size: 1.35rem;">Öğretmen Ders Konumu</h2>
       
       <div class="form-group">
         <label>Öğretmen Seçin:</label>
@@ -272,13 +273,13 @@
       <div class="form-group">
         <label>Ders Saati Seçin:</label>
         <select id="hour-select">
-          <option value="1">1. Ders Saati</option>
-          <option value="2">2. Ders Saati</option>
-          <option value="3">3. Ders Saati</option>
-          <option value="4">4. Ders Saati</option>
-          <option value="5">5. Ders Saati</option>
-          <option value="6">6. Ders Saati</option>
-          <option value="7">7. Ders Saati</option>
+          <option value="1">1. Ders Saati (09.00 - 09.40)</option>
+          <option value="2">2. Ders Saati (09.50 - 10.30)</option>
+          <option value="3">3. Ders Saati (10.40 - 11.20)</option>
+          <option value="4">4. Ders Saati (11.30 - 12.10)</option>
+          <option value="5">5. Ders Saati (Pzt-Per: 13.00-13.40 / Cuma: 12.20-13.00)</option>
+          <option value="6">6. Ders Saati (13.50 - 14.30)</option>
+          <option value="7">7. Ders Saati (14.40 - 15.20)</option>
         </select>
       </div>
 
@@ -286,10 +287,10 @@
       <div id="teacher-result"></div>
     </div>
 
-    <!-- NÖBETÇİ SORGULAMA -->
+    <!-- NÖBETÇİ ÖĞRETMEN SORGULAMA -->
     <div id="duty-view" class="view">
       <button class="btn-back" onclick="openPage('home-view')">← Ana Sayfa</button>
-      <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 14px; font-size: 1.4rem;">Nöbetçi Öğretmenler</h2>
+      <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 14px; font-size: 1.35rem;">Nöbetçi Öğretmenler</h2>
 
       <div class="form-group">
         <label>Tarih Seçin:</label>
@@ -302,20 +303,22 @@
   </div>
 
   <script>
-    // Zaman Çizelgesi
-    const times = {
+    // Zaman Çizelgesi ve Öğle Arası Saatleri
+    const timeTableSlots = {
       normal: {
-        1: "09:00 - 09:40", 2: "09:50 - 10:30", 3: "10:40 - 11:20", 4: "11:30 - 12:10",
-        5: "13:00 - 13:40", 6: "13:50 - 14:30", 7: "14:40 - 15:20"
+        1: "09.00 - 09.40", 2: "09.50 - 10.30", 3: "10.40 - 11.20", 4: "11.30 - 12.10",
+        break: "12.10 - 13.00 (Öğle Arası)",
+        5: "13.00 - 13.40", 6: "13.50 - 14.30", 7: "14.40 - 15.20"
       },
       cuma: {
-        1: "09:00 - 09:40", 2: "09:50 - 10:30", 3: "10:40 - 11:20", 4: "11:30 - 12:10",
-        5: "12:20 - 13:00", 6: "13:50 - 14:30", 7: "14:40 - 15:20"
+        1: "09.00 - 09.40", 2: "09.50 - 10.30", 3: "10.40 - 11.20", 4: "11.30 - 12.10",
+        5: "12.20 - 13.00",
+        break: "13.00 - 13.50 (Öğle Arası)",
+        6: "13.50 - 14.30", 7: "14.40 - 15.20"
       }
     };
 
-    // Ders Kod Açıklamaları
-    const lessonDict = {
+    const lessonNames = {
       "TR": "Türkçe", "MAT": "Matematik", "FEN": "Fen Bilimleri", "SOS": "Sosyal Bilgiler",
       "T.C.": "T.C. İnkılap Tarihi", "YB": "Yabancı Dil", "BEDEN": "Beden Eğitimi", "DİNKÜ": "Din Kültürü",
       "GR": "Görsel Sanatlar", "MZK": "Müzik", "TKTA": "Teknoloji Tasarım", "BLŞ": "Bilişim",
@@ -323,60 +326,60 @@
       "SOY": "Seçmeli Oyun", "SSOS": "Seç. Sosyal Sorumluluk", "SP": "Seç. Peygamberimizin Hayatı", "SSP": "Seçmeli Spor"
     };
 
-    // Resmî Çarşaf Tabloya Göre Eksiksiz Ders Dağılımı
+    // Tüm 2 Saatlik Birleşik Bloklar ve Birebir Ders Dağılımı
     const timetable = {
       "Ensar Çetinkaya": {
-        "Pazartesi": { 5: "8/A BEDEN" },
-        "Salı": { 1: "6/A BEDEN" },
-        "Çarşamba": { 6: "5/A BEDEN", 7: "5/A SOY" },
+        "Pazartesi": { 5: "8/A BEDEN", 6: "8/A BEDEN" },
+        "Salı": { 1: "6/A BEDEN", 2: "6/A BEDEN" },
+        "Çarşamba": { 5: "5/A BEDEN", 6: "5/A BEDEN", 7: "5/A SOY" },
         "Perşembe": {},
-        "Cuma": { 3: "7/A SOY", 6: "6/A SOY", 7: "7/A BEDEN" }
+        "Cuma": { 2: "7/A SOY", 5: "6/A SOY", 6: "7/A BEDEN", 7: "7/A BEDEN" }
       },
       "Bahar Sarı": {
-        "Pazartesi": { 1: "6/A SO", 3: "7/A SSOS", 4: "5/A YB", 6: "6/A YB" },
-        "Salı": { 1: "8/A YB", 3: "7/A YB" },
-        "Çarşamba": { 1: "5/A YB", 4: "5/A SO", 6: "7/A YB" },
-        "Perşembe": { 1: "7/A REH", 2: "6/A YB", 4: "8/A YB", 5: "8/A SSOS" },
-        "Cuma": {} // Cuma Yok
+        "Pazartesi": { 1: "6/A SO", 2: "6/A SO", 3: "7/A SSOS", 4: "7/A SSOS", 5: "5/A YB", 7: "6/A YB" },
+        "Salı": { 1: "8/A YB", 2: "8/A YB", 3: "7/A YB", 4: "7/A YB" },
+        "Çarşamba": { 1: "5/A YB", 2: "5/A YB", 3: "5/A SO", 4: "5/A SO", 6: "7/A YB", 7: "7/A YB" },
+        "Perşembe": { 1: "7/A REH", 2: "6/A YB", 3: "6/A YB", 4: "8/A YB", 5: "8/A YB", 6: "8/A SSOS", 7: "8/A SSOS" },
+        "Cuma": {}
       },
       "Levent Dallık": {
-        "Pazartesi": { 1: "5/A DİNKÜ", 3: "6/A DİNKÜ", 5: "5/A SKVM", 6: "5/A REH" },
-        "Salı": { 1: "7/A DİNKÜ", 3: "5/A SOS", 4: "5/A SKVM", 5: "6/A SOS", 7: "8/A DİNKÜ" },
-        "Çarşamba": { 1: "8/A T.C.", 3: "7/A SOS", 4: "6/A SOS" },
-        "Perşembe": { 4: "7/A SOS", 5: "5/A SOS" },
-        "Cuma": {} // Cuma Yok
+        "Pazartesi": { 1: "5/A DİNKÜ", 2: "5/A DİNKÜ", 3: "6/A DİNKÜ", 4: "6/A DİNKÜ", 6: "5/A SKVM", 7: "5/A REH" },
+        "Salı": { 1: "7/A DİNKÜ", 2: "7/A DİNKÜ", 3: "5/A SOS", 4: "5/A SKVM", 5: "6/A SOS", 6: "6/A SOS", 7: "8/A DİNKÜ" },
+        "Çarşamba": { 1: "8/A T.C.", 2: "8/A T.C.", 3: "7/A SOS", 4: "7/A SOS", 5: "6/A SOS" },
+        "Perşembe": { 4: "7/A SOS", 5: "7/A SOS", 6: "5/A SOS", 7: "5/A SOS" },
+        "Cuma": {}
       },
       "Kadir Eser": {
-        "Pazartesi": {}, // Pazartesi Yok
-        "Salı": { 5: "8/A SSP", 6: "5/A FEN" },
-        "Çarşamba": { 2: "7/A FEN", 3: "8/A SSP", 4: "8/A FEN", 6: "6/A FEN" },
-        "Perşembe": { 3: "7/A FEN", 4: "6/A BLŞ", 6: "6/A FEN" },
-        "Cuma": { 1: "8/A FEN", 3: "5/A BLŞ", 4: "8/A REH", 5: "5/A FEN" }
+        "Pazartesi": {},
+        "Salı": { 5: "8/A SSP", 6: "5/A FEN", 7: "5/A FEN" },
+        "Çarşamba": { 1: "7/A FEN", 2: "7/A FEN", 3: "8/A SSP", 4: "8/A FEN", 5: "8/A FEN", 6: "6/A FEN", 7: "6/A FEN" },
+        "Perşembe": { 2: "7/A FEN", 3: "7/A FEN", 4: "6/A BLŞ", 5: "6/A BLŞ", 6: "6/A FEN", 7: "6/A FEN" },
+        "Cuma": { 1: "8/A FEN", 2: "8/A FEN", 3: "5/A BLŞ", 4: "5/A BLŞ", 5: "8/A REH", 6: "5/A FEN", 7: "5/A FEN" }
       },
       "Yasemin Çakır": {
-        "Pazartesi": {}, // Pazartesi Yok
-        "Salı": { 3: "6/A SKVM", 4: "6/A MAT", 5: "5/A MAT", 6: "7/A MAT" },
-        "Çarşamba": { 1: "6/A SKVM", 3: "6/A MAT", 5: "7/A MAT", 6: "8/A MAT" },
-        "Perşembe": { 1: "6/A REH", 3: "8/A MAT", 4: "5/A MAT" },
-        "Cuma": { 2: "5/A MAT", 4: "6/A MAT", 5: "7/A MAT", 6: "8/A MAT" }
+        "Pazartesi": {},
+        "Salı": { 3: "6/A SKVM", 4: "6/A MAT", 5: "5/A MAT", 6: "7/A MAT", 7: "7/A MAT" },
+        "Çarşamba": { 1: "6/A SKVM", 2: "6/A MAT", 3: "6/A MAT", 4: "7/A MAT", 5: "7/A MAT", 6: "8/A MAT", 7: "8/A MAT" },
+        "Perşembe": { 1: "6/A REH", 3: "8/A MAT", 4: "8/A MAT", 5: "5/A MAT" },
+        "Cuma": { 1: "5/A MAT", 2: "5/A MAT", 3: "6/A MAT", 4: "6/A MAT", 5: "7/A MAT", 6: "8/A MAT", 7: "8/A MAT" }
       },
       "Turan Hoca": {
-        "Pazartesi": { 1: "7/A TR", 3: "5/A TR", 5: "6/A TR", 7: "8/A TR" },
-        "Salı": { 2: "5/A TR", 4: "8/A TR", 5: "7/A TR", 6: "6/A TR" },
-        "Çarşamba": {}, // Çarşamba Yok
-        "Perşembe": { 2: "5/A TR", 6: "7/A TR" },
-        "Cuma": { 3: "6/A TR", 4: "8/A TR" }
+        "Pazartesi": { 1: "7/A TR", 2: "7/A TR", 3: "5/A TR", 4: "5/A TR", 5: "6/A TR", 6: "6/A TR", 7: "8/A TR" },
+        "Salı": { 1: "5/A TR", 2: "5/A TR", 3: "8/A TR", 4: "8/A TR", 5: "7/A TR", 6: "6/A TR", 7: "6/A TR" },
+        "Çarşamba": {},
+        "Perşembe": { 1: "5/A TR", 2: "5/A TR", 6: "7/A TR", 7: "7/A TR" },
+        "Cuma": { 1: "6/A TR", 2: "6/A TR", 3: "8/A TR", 4: "8/A TR" }
       },
       "Demet Demirtaş": {
-        "Pazartesi": { 1: "8/A SP", 3: "8/A MZK", 4: "8/A GR", 5: "7/A GR", 7: "7/A SP" },
-        "Salı": {}, // Salı Yok
-        "Çarşamba": {}, // Çarşamba Yok
-        "Perşembe": { 2: "8/A TKTA", 4: "5/A GR" },
-        "Cuma": { 1: "7/A MZK", 4: "7/A TKTA", 5: "5/A MZK", 6: "6/A MZK", 7: "6/A GR" }
+        "Pazartesi": { 1: "8/A SP", 2: "8/A SP", 3: "8/A MZK", 4: "8/A GR", 5: "7/A GR", 6: "7/A SP", 7: "7/A SP" },
+        "Salı": {},
+        "Çarşamba": {},
+        "Perşembe": { 1: "8/A TKTA", 2: "8/A TKTA", 3: "5/A GR" },
+        "Cuma": { 1: "7/A MZK", 3: "7/A TKTA", 4: "7/A TKTA", 5: "5/A MZK", 6: "6/A MZK", 7: "6/A GR" }
       }
     };
 
-    // Excel Dosyasından Çıkarılan Güncel Nöbet Listesi
+    // Excel Çizelgesinden Alınan Eylül, Ekim, Kasım, Aralık 2026 Nöbet Veritabanı
     const dutyDatabase = {
       "2026-09-14": { bahce: "Bahar Sarı", bina: "Levent Dallık" },
       "2026-09-15": { bahce: "Esma Baydar", bina: "Yasemin Çakır" },
@@ -388,6 +391,9 @@
       "2026-09-23": { bahce: "Kadir Eser", bina: "Esma Baydar" },
       "2026-09-24": { bahce: "Yasemin Çakır", bina: "Bahar Sarı" },
       "2026-09-25": { bahce: "Demet Taşdemir", bina: "Kadir Eser" },
+      "2026-09-28": { bahce: "Esma Baydar", bina: "Levent Dallık" },
+      "2026-09-29": { bahce: "Bahar Sarı", bina: "Yasemin Çakır" },
+      "2026-09-30": { bahce: "Kadir Eser", bina: "Levent Dallık" },
       "2026-10-01": { bahce: "Levent Dallık", bina: "Demet Taşdemir" },
       "2026-10-02": { bahce: "Kadir Eser", bina: "Yasemin Çakır" },
       "2026-10-05": { bahce: "Turan Hoca", bina: "Demet Taşdemir" },
@@ -395,15 +401,58 @@
       "2026-10-07": { bahce: "Kadir Eser", bina: "Yasemin Çakır" },
       "2026-10-08": { bahce: "Levent Dallık", bina: "Demet Taşdemir" },
       "2026-10-09": { bahce: "Esma Baydar", bina: "Turan Hoca" },
+      "2026-10-12": { bahce: "Bahar Sarı", bina: "Levent Dallık" },
+      "2026-10-13": { bahce: "Turan Hoca", bina: "Yasemin Çakır" },
+      "2026-10-14": { bahce: "Kadir Eser", bina: "Esma Baydar" },
+      "2026-10-15": { bahce: "Demet Taşdemir", bina: "Bahar Sarı" },
+      "2026-10-16": { bahce: "Esma Baydar", bina: "Yasemin Çakır" },
+      "2026-10-19": { bahce: "Demet Taşdemir", bina: "Esma Baydar" },
+      "2026-10-20": { bahce: "Bahar Sarı", bina: "Turan Hoca" },
+      "2026-10-21": { bahce: "Kadir Eser", bina: "Levent Dallık" },
+      "2026-10-22": { bahce: "Yasemin Çakır", bina: "Demet Taşdemir" },
+      "2026-10-23": { bahce: "Kadir Eser", bina: "Turan Hoca" },
+      "2026-10-26": { bahce: "Turan Hoca", bina: "Bahar Sarı" },
+      "2026-10-27": { bahce: "Esma Baydar", bina: "Yasemin Çakır" },
+      "2026-10-28": { bahce: "Kadir Eser", bina: "Levent Dallık" },
       "2026-11-02": { bahce: "Demet Taşdemir", bina: "Esma Baydar" },
       "2026-11-03": { bahce: "Bahar Sarı", bina: "Turan Hoca" },
       "2026-11-04": { bahce: "Kadir Eser", bina: "Levent Dallık" },
       "2026-11-05": { bahce: "Yasemin Çakır", bina: "Bahar Sarı" },
       "2026-11-06": { bahce: "Demet Taşdemir", bina: "Kadir Eser" },
+      "2026-11-09": { bahce: "Turan Hoca", bina: "Bahar Sarı" },
+      "2026-11-10": { bahce: "Levent Dallık", bina: "Yasemin Çakır" },
+      "2026-11-11": { bahce: "Esma Baydar", bina: "Kadir Eser" },
+      "2026-11-12": { bahce: "Demet Taşdemir", bina: "Turan Hoca" },
+      "2026-11-13": { bahce: "Esma Baydar", bina: "Yasemin Çakır" },
+      "2026-11-23": { bahce: "Bahar Sarı", bina: "Levent Dallık" },
+      "2026-11-24": { bahce: "Esma Baydar", bina: "Turan Hoca" },
+      "2026-11-25": { bahce: "Kadir Eser", bina: "Levent Dallık" },
+      "2026-11-26": { bahce: "Yasemin Çakır", bina: "Demet Taşdemir" },
+      "2026-11-27": { bahce: "Kadir Eser", bina: "Turan Hoca" },
+      "2026-11-30": { bahce: "Demet Taşdemir", bina: "Esma Baydar" },
       "2026-12-01": { bahce: "Levent Dallık", bina: "Turan Hoca" },
       "2026-12-02": { bahce: "Esma Baydar", bina: "Kadir Eser" },
       "2026-12-03": { bahce: "Turan Hoca", bina: "Bahar Sarı" },
-      "2026-12-04": { bahce: "Yasemin Çakır", bina: "Kadir Eser" }
+      "2026-12-04": { bahce: "Yasemin Çakır", bina: "Kadir Eser" },
+      "2026-12-07": { bahce: "Demet Taşdemir", bina: "Bahar Sarı" },
+      "2026-12-08": { bahce: "Turan Hoca", bina: "Levent Dallık" },
+      "2026-12-09": { bahce: "Esma Baydar", bina: "Kadir Eser" },
+      "2026-12-10": { bahce: "Bahar Sarı", bina: "Demet Taşdemir" },
+      "2026-12-11": { bahce: "Esma Baydar", bina: "Yasemin Çakır" },
+      "2026-12-14": { bahce: "Bahar Sarı", bina: "Levent Dallık" },
+      "2026-12-15": { bahce: "Esma Baydar", bina: "Yasemin Çakır" },
+      "2026-12-16": { bahce: "Kadir Eser", bina: "Levent Dallık" },
+      "2026-12-17": { bahce: "Demet Taşdemir", bina: "Turan Hoca" },
+      "2026-12-18": { bahce: "Kadir Eser", bina: "Yasemin Çakır" },
+      "2026-12-21": { bahce: "Turan Hoca", bina: "Esma Baydar" },
+      "2026-12-22": { bahce: "Bahar Sarı", bina: "Yasemin Çakır" },
+      "2026-12-23": { bahce: "Esma Baydar", bina: "Levent Dallık" },
+      "2026-12-24": { bahce: "Yasemin Çakır", bina: "Bahar Sarı" },
+      "2026-12-25": { bahce: "Demet Taşdemir", bina: "Turan Hoca" },
+      "2026-12-28": { bahce: "Demet Taşdemir", bina: "Levent Dallık" },
+      "2026-12-29": { bahce: "Bahar Sarı", bina: "Turan Hoca" },
+      "2026-12-30": { bahce: "Kadir Eser", bina: "Esma Baydar" },
+      "2026-12-31": { bahce: "Levent Dallık", bina: "Demet Taşdemir" }
     };
 
     function openPage(pageId) {
@@ -422,7 +471,8 @@
       const hour = parseInt(document.getElementById('hour-select').value);
       const resultDiv = document.getElementById('teacher-result');
 
-      const timeSlot = day === "Cuma" ? times.cuma[hour] : times.normal[hour];
+      const timeSlot = day === "Cuma" ? timeTableSlots.cuma[hour] : timeTableSlots.normal[hour];
+      const breakInfo = day === "Cuma" ? timeTableSlots.cuma.break : timeTableSlots.normal.break;
 
       // 1. Okul Müdürü
       if (teacher === "Sercan Ersöz") {
@@ -450,12 +500,13 @@
               <h4>🏫 Esma Baydar</h4>
               <p style="margin-top:6px;">Şu anda <strong>Birleştirilmiş Sınıf</strong> dersindedir.</p>
               <div class="time-badge">${hour}. Ders (${timeSlot})</div>
+              <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Not: Öğle Arası: ${breakInfo}</div>
             </div>`;
         }
         return;
       }
 
-      // 3. Asude Genç (Okul Öncesi)
+      // 3. Asude Genç (Okul Öncesi Öğretmeni)
       if (teacher === "Asude Genç") {
         if (hour === 7) {
           resultDiv.innerHTML = `
@@ -470,23 +521,25 @@
               <h4>🎨 Asude Genç</h4>
               <p style="margin-top:6px;">Şu anda <strong>Anasınıfı</strong> şubesindedir.</p>
               <div class="time-badge">${hour}. Ders (${timeSlot})</div>
+              <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Not: Öğle Arası: ${breakInfo}</div>
             </div>`;
         }
         return;
       }
 
-      // 4. Branş Öğretmenleri & Müdür Yrd.
+      // 4. Branş Öğretmenleri & Müdür Yardımcısı
       const teacherSchedule = timetable[teacher];
       if (teacherSchedule && teacherSchedule[day] && teacherSchedule[day][hour]) {
         const item = teacherSchedule[day][hour];
         const [cls, subCode] = item.split(" ");
-        const subName = lessonDict[subCode] || subCode;
+        const subName = lessonNames[subCode] || subCode;
 
         resultDiv.innerHTML = `
           <div class="result-box">
             <h4>📚 ${teacher}</h4>
-            <p style="margin-top:6px;">Şu anda <strong>${cls}</strong> sınıfında <strong>${subName} (${subCode})</strong> dersini işlemektedir.</p>
+            <p style="margin-top:6px;">Şu anda <strong>${cls}</strong> sınıfında <strong>${subName} (${subCode})</strong> dersindedir.</p>
             <div class="time-badge">${hour}. Ders (${timeSlot})</div>
+            <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Not: Öğle Arası: ${breakInfo}</div>
           </div>`;
       } else {
         if (teacher === "Ensar Çetinkaya") {
