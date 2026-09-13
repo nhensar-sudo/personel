@@ -3,20 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Personel">
   <title>Personel - Yağcıllı Ortaokulu</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
   
   <style>
     :root {
-      --primary-color: #1e3a8a;
-      --secondary-color: #2563eb;
-      --bg-color: #f8fafc;
+      --primary: #1e3a8a;
+      --secondary: #2563eb;
+      --bg: #f8fafc;
       --card-bg: #ffffff;
-      --text-main: #0f172a;
-      --accent-red: #dc2626;
-      --border-color: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --warning: #d97706;
     }
 
     * {
@@ -28,8 +35,8 @@
     }
 
     body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
+      background-color: var(--bg);
+      color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -39,49 +46,76 @@
 
     .container {
       width: 100%;
-      max-width: 500px;
+      max-width: 520px;
     }
 
     header {
       text-align: center;
-      margin-bottom: 24px;
-      padding-top: 10px;
+      margin-bottom: 20px;
+      padding-top: 6px;
     }
 
     header h1 {
       font-family: 'Playfair Display', serif;
       font-style: italic;
       font-weight: 900;
-      font-size: 2.6rem;
-      color: var(--primary-color);
+      font-size: 2.5rem;
+      color: var(--primary);
       letter-spacing: -0.5px;
     }
 
     header p {
-      font-size: 0.95rem;
-      color: #64748b;
+      font-size: 0.9rem;
+      color: var(--muted);
       margin-top: 2px;
       font-weight: 600;
+    }
+
+    .live-status-bar {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #22c55e;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    .live-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary);
     }
 
     .menu-grid {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
     }
 
     .card {
       background: var(--card-bg);
       border-radius: 16px;
-      padding: 22px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      padding: 18px 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.04);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border);
       user-select: none;
-      transition: transform 0.15s ease;
+      transition: all 0.15s ease;
     }
 
     .card:active {
@@ -93,20 +127,20 @@
       font-family: 'Playfair Display', serif;
       font-style: italic;
       font-weight: 700;
-      font-size: 1.3rem;
-      color: var(--primary-color);
+      font-size: 1.22rem;
+      color: var(--primary);
     }
 
     .card-sub {
-      font-size: 0.85rem;
-      color: #64748b;
-      margin-top: 4px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 3px;
     }
 
     .card-icon {
-      font-size: 2rem;
+      font-size: 1.8rem;
       background: #eff6ff;
-      padding: 10px;
+      padding: 8px 12px;
       border-radius: 12px;
     }
 
@@ -116,7 +150,7 @@
       border-radius: 16px;
       padding: 20px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border);
     }
 
     .btn-back {
@@ -133,7 +167,7 @@
     }
 
     .form-group {
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     label {
@@ -141,12 +175,12 @@
       font-size: 0.85rem;
       font-weight: 600;
       color: #475569;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
     }
 
-    select, input {
+    select, input, textarea {
       width: 100%;
-      padding: 12px;
+      padding: 11px;
       border: 1px solid #cbd5e1;
       border-radius: 10px;
       font-size: 0.95rem;
@@ -155,58 +189,100 @@
 
     .btn-submit {
       width: 100%;
-      background: var(--primary-color);
+      background: var(--primary);
       color: white;
       border: none;
       padding: 13px;
       border-radius: 10px;
       font-weight: 600;
-      font-size: 1rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-submit:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-action {
+      background: var(--secondary);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
       cursor: pointer;
       margin-top: 8px;
+      display: inline-block;
     }
 
     .result-box {
-      margin-top: 18px;
-      padding: 16px;
+      margin-top: 16px;
+      padding: 14px 16px;
       border-radius: 12px;
       background: #eff6ff;
-      border-left: 5px solid var(--secondary-color);
+      border-left: 5px solid var(--secondary);
     }
 
     .warning-box {
       background: #fef2f2;
-      border-left-color: var(--accent-red);
+      border-left-color: var(--danger);
       color: #991b1b;
     }
 
     .duty-card {
       background: #f8fafc;
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 14px;
-      margin-top: 10px;
+      padding: 12px 14px;
+      margin-top: 8px;
     }
 
     .duty-role {
       font-weight: 700;
-      color: var(--primary-color);
-      font-size: 0.85rem;
+      color: var(--primary);
+      font-size: 0.8rem;
     }
 
     .duty-name {
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       font-weight: 600;
-      margin-top: 4px;
+      margin-top: 3px;
     }
 
     .time-badge {
       display: inline-block;
-      margin-top: 8px;
+      margin-top: 6px;
       background: rgba(0,0,0,0.06);
       padding: 4px 8px;
       border-radius: 6px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #334155;
       font-weight: 600;
     }
   </style>
@@ -216,29 +292,62 @@
   <div class="container">
     <header>
       <h1>Personel</h1>
-      <p>Yağcıllı Ortaokulu</p>
+      <p>Yağcıllı Ortaokulu Yönetim Sistemi</p>
     </header>
 
-    <!-- ANA SAYFA -->
+    <!-- ANLIK CANLI DURUM ÇUBUĞU -->
+    <div class="live-status-bar" onclick="openPage('live-view')">
+      <div style="display: flex; align-items: center;">
+        <span class="live-dot"></span>
+        <span class="live-text" id="live-banner-text">Canlı Durum Kontrol Ediliyor...</span>
+      </div>
+      <span style="font-size: 0.8rem; color: var(--secondary); font-weight: 700;">Görüntüle →</span>
+    </div>
+
+    <!-- ANA MENÜ KARTLARI -->
     <div id="home-view" class="menu-grid">
       <div class="card" onclick="openPage('teachers-view')">
         <div>
           <div class="card-title">Yağcıllı Ortaokulu Öğretmenleri</div>
-          <div class="card-sub">Ders ve Sınıf Konumu Sorgulama</div>
+          <div class="card-sub">Öğretmen Bazlı Ders & Sınıf Sorgulama</div>
         </div>
         <div class="card-icon">👨‍🏫</div>
+      </div>
+
+      <div class="card" onclick="openPage('classes-view')">
+        <div>
+          <div class="card-title">Sınıf Ders Programları</div>
+          <div class="card-sub">5/A, 6/A, 7/A, 8/A Şube Akışları</div>
+        </div>
+        <div class="card-icon">🏫</div>
       </div>
 
       <div class="card" onclick="openPage('duty-view')">
         <div>
           <div class="card-title">Yağcıllı Ortaokulu Nöbetçi Öğretmenler</div>
-          <div class="card-sub">Günlük Nöbet Çizelgesi</div>
+          <div class="card-sub">Günlük Nöbet Çizelgesi & Dağıtıcı</div>
         </div>
         <div class="card-icon">🛡️</div>
       </div>
+
+      <div class="card" onclick="openPage('notes-view')">
+        <div>
+          <div class="card-title">Nöbet & Servis Not Defteri</div>
+          <div class="card-sub">Taşımalı Servis & Günlük Olay Takibi</div>
+        </div>
+        <div class="card-icon">📝</div>
+      </div>
     </div>
 
-    <!-- ÖĞRETMEN DERS SORGULAMA -->
+    <!-- 1. CANLI DURUM SAYFASI -->
+    <div id="live-view" class="view">
+      <button class="btn-back" onclick="openPage('home-view')">← Ana Sayfa</button>
+      <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 6px; font-size: 1.35rem;">Canlı Okul Durumu</h2>
+      <p id="live-detail-clock" style="font-size: 0.85rem; color: var(--muted); margin-bottom: 12px;"></p>
+      <div id="live-roster-result"></div>
+    </div>
+
+    <!-- 2. ÖĞRETMEN DERS SORGULAMA -->
     <div id="teachers-view" class="view">
       <button class="btn-back" onclick="openPage('home-view')">← Ana Sayfa</button>
       <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 14px; font-size: 1.35rem;">Öğretmen Ders Konumu</h2>
@@ -287,34 +396,115 @@
       <div id="teacher-result"></div>
     </div>
 
-    <!-- NÖBETÇİ ÖĞRETMEN SORGULAMA -->
+    <!-- 3. SINIF BAZLI DERS PROGRAMI -->
+    <div id="classes-view" class="view">
+      <button class="btn-back" onclick="openPage('home-view')">← Ana Sayfa</button>
+      <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 14px; font-size: 1.35rem;">Sınıf Ders Programı</h2>
+
+      <div class="form-group">
+        <label>Sınıf Seçin:</label>
+        <select id="class-select" onchange="renderClassSchedule()">
+          <option value="5/A">5/A Sınıfı</option>
+          <option value="6/A">6/A Sınıfı</option>
+          <option value="7/A">7/A Sınıfı</option>
+          <option value="8/A">8/A Sınıfı</option>
+          <option value="Birleştirilmiş Sınıf">Birleştirilmiş Sınıf (İlkokul)</option>
+          <option value="Anasınıfı">Anasınıfı (Okul Öncesi)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Gün Seçin:</label>
+        <select id="class-day-select" onchange="renderClassSchedule()">
+          <option value="Pazartesi">Pazartesi</option>
+          <option value="Salı">Salı</option>
+          <option value="Çarşamba">Çarşamba</option>
+          <option value="Perşembe">Perşembe</option>
+          <option value="Cuma">Cuma</option>
+        </select>
+      </div>
+
+      <div id="class-schedule-result"></div>
+    </div>
+
+    <!-- 4. NÖBETÇİLER VE OTOMATİK DAĞITICI -->
     <div id="duty-view" class="view">
       <button class="btn-back" onclick="openPage('home-view')">← Ana Sayfa</button>
       <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 14px; font-size: 1.35rem;">Nöbetçi Öğretmenler</h2>
 
       <div class="form-group">
-        <label>Tarih Seçin:</label>
+        <label>Tarih Seçin (Eylül-Aralık 2026):</label>
         <input type="date" id="duty-date-input">
       </div>
-
       <button class="btn-submit" onclick="queryDuty()">Nöbetçileri Göster</button>
       <div id="duty-result"></div>
+
+      <hr style="margin: 20px 0; border: 0; border-top: 1px dashed var(--border);">
+
+      <h3 style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.15rem; color: var(--primary); margin-bottom: 8px;">Yeni Dönem Nöbet Dağıtıcı (Generator)</h3>
+      <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 12px;">Öğretmenlerin boş günlerini koruyarak dengeli ve kurallara uygun rastgele nöbet listesi üretir.</p>
+      
+      <div class="form-group">
+        <label>Başlangıç Tarihi:</label>
+        <input type="date" id="gen-start-date" value="2027-02-08">
+      </div>
+      <div class="form-group">
+        <label>Bitiş Tarihi:</label>
+        <input type="date" id="gen-end-date" value="2027-06-18">
+      </div>
+      <button class="btn-action" onclick="generateNewDutySchedule()">🎲 Yeni Nöbet Çizelgesi Üret & İndir (Excel/CSV)</button>
+      <div id="gen-result"></div>
     </div>
+
+    <!-- 5. TAŞIMALI SERVİS VE NÖBET NOTLARI -->
+    <div id="notes-view" class="view">
+      <button class="btn-back" onclick="openPage('home-view')">← Ana Sayfa</button>
+      <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 12px; font-size: 1.35rem;">Nöbet & Servis Notları</h2>
+      <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 12px;">Bu alana girdiğiniz taşımalı servis ve nöbet notları cihazınızın hafızasında çevrimdışı olarak saklanır.</p>
+
+      <div class="form-group">
+        <label>Tarih:</label>
+        <input type="date" id="note-date">
+      </div>
+
+      <div class="form-group">
+        <label>Taşımalı Servis Takip (Giriş/Çıkış Saatleri & Şoför):</label>
+        <input type="text" id="note-service" placeholder="Örn: 1. Hat 08.45 geldi / 2. Hat 15.30 çıktı">
+      </div>
+
+      <div class="form-group">
+        <label>Günlük Nöbet Olayı / Notlar:</label>
+        <textarea id="note-text" rows="3" placeholder="Örn: 3. teneffüs bahçede hafif yaralanma pansuman yapıldı..."></textarea>
+      </div>
+
+      <button class="btn-submit" onclick="saveDutyNote()">Notu Kaydet</button>
+      <div id="saved-notes-list" style="margin-top: 16px;"></div>
+    </div>
+
   </div>
 
   <script>
-    // Zaman Çizelgesi ve Öğle Arası Saatleri
+    // Zaman Çizelgesi
     const timeTableSlots = {
       normal: {
-        1: "09.00 - 09.40", 2: "09.50 - 10.30", 3: "10.40 - 11.20", 4: "11.30 - 12.10",
+        1: { start: "09:00", end: "09:40", text: "09.00 - 09.40" },
+        2: { start: "09:50", end: "10:30", text: "09.50 - 10.30" },
+        3: { start: "10:40", end: "11:20", text: "10.40 - 11.20" },
+        4: { start: "11:30", end: "12:10", text: "11.30 - 12.10" },
         break: "12.10 - 13.00 (Öğle Arası)",
-        5: "13.00 - 13.40", 6: "13.50 - 14.30", 7: "14.40 - 15.20"
+        5: { start: "13:00", end: "13:40", text: "13.00 - 13.40" },
+        6: { start: "13:50", end: "14:30", text: "13.50 - 14.30" },
+        7: { start: "14:40", end: "15:20", text: "14.40 - 15.20" }
       },
       cuma: {
-        1: "09.00 - 09.40", 2: "09.50 - 10.30", 3: "10.40 - 11.20", 4: "11.30 - 12.10",
-        5: "12.20 - 13.00",
+        1: { start: "09:00", end: "09:40", text: "09.00 - 09.40" },
+        2: { start: "09:50", end: "10:30", text: "09.50 - 10.30" },
+        3: { start: "10:40", end: "11:20", text: "10.40 - 11.20" },
+        4: { start: "11:30", end: "12:10", text: "11.30 - 12.10" },
+        5: { start: "12:20", end: "13:00", text: "12.20 - 13.00" },
         break: "13.00 - 13.50 (Öğle Arası)",
-        6: "13.50 - 14.30", 7: "14.40 - 15.20"
+        6: { start: "13:50", end: "14:30", text: "13.50 - 14.30" },
+        7: { start: "14:40", end: "15:20", text: "14.40 - 15.20" }
       }
     };
 
@@ -326,7 +516,7 @@
       "SOY": "Seçmeli Oyun", "SSOS": "Seç. Sosyal Sorumluluk", "SP": "Seç. Peygamberimizin Hayatı", "SSP": "Seçmeli Spor"
     };
 
-    // Tüm 2 Saatlik Birleşik Bloklar ve Birebir Ders Dağılımı
+    // Teyit Edilmiş Tam Ders Dağılımı
     const timetable = {
       "Ensar Çetinkaya": {
         "Pazartesi": { 5: "8/A BEDEN", 6: "8/A BEDEN" },
@@ -379,7 +569,7 @@
       }
     };
 
-    // Excel Çizelgesinden Alınan Eylül, Ekim, Kasım, Aralık 2026 Nöbet Veritabanı
+    // Excel Dosyasındaki Eylül, Ekim, Kasım, Aralık 2026 Nöbet Veritabanı
     const dutyDatabase = {
       "2026-09-14": { bahce: "Bahar Sarı", bina: "Levent Dallık" },
       "2026-09-15": { bahce: "Esma Baydar", bina: "Yasemin Çakır" },
@@ -455,79 +645,151 @@
       "2026-12-31": { bahce: "Levent Dallık", bina: "Demet Taşdemir" }
     };
 
+    // SAYFA GEÇİŞİ
     function openPage(pageId) {
+      document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
       document.getElementById('home-view').style.display = 'none';
-      document.getElementById('teachers-view').style.display = 'none';
-      document.getElementById('duty-view').style.display = 'none';
 
-      document.getElementById(pageId).style.display = 'block';
+      if (pageId === 'home-view') {
+        document.getElementById('home-view').style.display = 'flex';
+      } else {
+        document.getElementById(pageId).style.display = 'block';
+        if (pageId === 'live-view') renderLiveView();
+        if (pageId === 'classes-view') renderClassSchedule();
+        if (pageId === 'notes-view') renderNotesList();
+      }
     }
 
-    document.getElementById('duty-date-input').value = "2026-09-14";
+    // --- 1. CANLI DURUM MODU ---
+    const dayNamesTr = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+    
+    function getCurrentPeriodInfo() {
+      const now = new Date();
+      const dayIdx = now.getDay();
+      if (dayIdx === 0 || dayIdx === 6) {
+        return { isWeekend: true, text: "Hafta Sonu (Okul Tatil)" };
+      }
+      const dayName = dayNamesTr[dayIdx];
+      const isCuma = dayName === "Cuma";
+      const slots = isCuma ? timeTableSlots.cuma : timeTableSlots.normal;
 
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      // Kontrol Saatleri
+      for (let h = 1; h <= 7; h++) {
+        const [sh, sm] = slots[h].start.split(":").map(Number);
+        const [eh, em] = slots[h].end.split(":").map(Number);
+        const sMin = sh * 60 + sm;
+        const eMin = eh * 60 + em;
+        if (currentMinutes >= sMin && currentMinutes <= eMin) {
+          return { dayName, hour: h, isLesson: true, text: `${dayName} - ${h}. Ders Saati (${slots[h].text})` };
+        }
+      }
+
+      if (currentMinutes < 9 * 60) {
+        return { dayName, isBefore: true, text: `${dayName} - Sabah Ders Öncesi (09.00'da Başlar)` };
+      }
+      if (currentMinutes > 15 * 60 + 20) {
+        return { dayName, isAfter: true, text: `${dayName} - Ders Çıkışı (Dersler Bitti)` };
+      }
+
+      // Teneffüs veya Öğle Arası
+      return { dayName, isBreak: true, text: `${dayName} - Teneffüs / Öğle Arası` };
+    }
+
+    function updateLiveBanner() {
+      const info = getCurrentPeriodInfo();
+      document.getElementById('live-banner-text').textContent = info.text;
+    }
+    setInterval(updateLiveBanner, 30000);
+    updateLiveBanner();
+
+    function renderLiveView() {
+      const info = getCurrentPeriodInfo();
+      const clockDiv = document.getElementById('live-detail-clock');
+      const resDiv = document.getElementById('live-roster-result');
+      const now = new Date();
+      clockDiv.textContent = `Sistem Saati: ${now.toLocaleDateString('tr-TR')} ${now.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})} | ${info.text}`;
+
+      if (info.isWeekend || info.isBefore || info.isAfter) {
+        resDiv.innerHTML = `<div class="result-box warning-box"><h4>⚠️ Şu Anda Aktif Ders Bulunmamaktadır</h4><p>${info.text}</p></div>`;
+        return;
+      }
+
+      if (info.isBreak) {
+        resDiv.innerHTML = `<div class="result-box"><h4>☕ Teneffüs / Öğle Arası</h4><p>Şu anda ders arası veya öğle yemeği vaktidir. Öğretmenler dinlenmede / nöbet alanındadır.</p></div>`;
+        return;
+      }
+
+      // Aktif ders varsa tüm öğretmenlerin konumunu listele
+      let html = `<div class="table-responsive"><table><thead><tr><th>Öğretmen</th><th>Sınıf / Görev</th><th>Ders</th></tr></thead><tbody>`;
+      
+      const teacherList = ["Ensar Çetinkaya", "Bahar Sarı", "Levent Dallık", "Kadir Eser", "Yasemin Çakır", "Turan Hoca", "Demet Demirtaş", "Esma Baydar", "Asude Genç", "Sercan Ersöz"];
+
+      teacherList.forEach(t => {
+        let cls = "-";
+        let sub = "-";
+
+        if (t === "Sercan Ersöz") {
+          cls = "Makam"; sub = "Okul Müdürü (İdari Görev)";
+        } else if (t === "Esma Baydar") {
+          if (info.hour === 7) { cls = "-"; sub = "⚠️ Dersi Yok"; }
+          else { cls = "Birleştirilmiş Sınıf"; sub = "Sınıf Öğretmenliği"; }
+        } else if (t === "Asude Genç") {
+          if (info.hour === 7) { cls = "-"; sub = "⚠️ Dersi Yok"; }
+          else { cls = "Anasınıfı"; sub = "Okul Öncesi Eğitimi"; }
+        } else {
+          const item = timetable[t] && timetable[t][info.dayName] ? timetable[t][info.dayName][info.hour] : null;
+          if (item) {
+            const [c, s] = item.split(" ");
+            cls = c; sub = lessonNames[s] || s;
+          } else {
+            if (t === "Ensar Çetinkaya") {
+              cls = "Müdür Yrd. Odası"; sub = "İdari Görev";
+            } else {
+              cls = "-"; sub = "⚠️ Dersi Yok / Boş Saat";
+            }
+          }
+        }
+
+        html += `<tr><td><strong>${t}</strong></td><td>${cls}</td><td>${sub}</td></tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+      resDiv.innerHTML = html;
+    }
+
+    // --- 2. ÖĞRETMEN SORGULAMA ---
     function queryTeacher() {
       const teacher = document.getElementById('teacher-select').value;
       const day = document.getElementById('day-select').value;
       const hour = parseInt(document.getElementById('hour-select').value);
       const resultDiv = document.getElementById('teacher-result');
 
-      const timeSlot = day === "Cuma" ? timeTableSlots.cuma[hour] : timeTableSlots.normal[hour];
+      const timeSlot = day === "Cuma" ? timeTableSlots.cuma[hour].text : timeTableSlots.normal[hour].text;
       const breakInfo = day === "Cuma" ? timeTableSlots.cuma.break : timeTableSlots.normal.break;
 
-      // 1. Okul Müdürü
       if (teacher === "Sercan Ersöz") {
-        resultDiv.innerHTML = `
-          <div class="result-box">
-            <h4>👔 Sercan Ersöz (Okul Müdürü)</h4>
-            <p style="margin-top:6px;">Haftaiçi her gün idari görevdedir.</p>
-            <div class="time-badge">${timeSlot}</div>
-          </div>`;
+        resultDiv.innerHTML = `<div class="result-box"><h4>👔 Sercan Ersöz (Okul Müdürü)</h4><p style="margin-top:6px;">Haftaiçi her gün idari görevdedir.</p><div class="time-badge">${timeSlot}</div></div>`;
         return;
       }
-
-      // 2. Esma Baydar (Sınıf Öğretmeni)
       if (teacher === "Esma Baydar") {
         if (hour === 7) {
-          resultDiv.innerHTML = `
-            <div class="result-box warning-box">
-              <h4>⚠️ Dersi Yoktur!</h4>
-              <p style="margin-top:6px;">İlkokul öğretmeni olduğu için 7. ders saatine dahil değildir.</p>
-              <div class="time-badge">${timeSlot}</div>
-            </div>`;
+          resultDiv.innerHTML = `<div class="result-box warning-box"><h4>⚠️ Dersi Yoktur!</h4><p style="margin-top:6px;">İlkokul öğretmeni olduğu için 7. ders saatine dahil değildir.</p><div class="time-badge">${timeSlot}</div></div>`;
         } else {
-          resultDiv.innerHTML = `
-            <div class="result-box">
-              <h4>🏫 Esma Baydar</h4>
-              <p style="margin-top:6px;">Şu anda <strong>Birleştirilmiş Sınıf</strong> dersindedir.</p>
-              <div class="time-badge">${hour}. Ders (${timeSlot})</div>
-              <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Not: Öğle Arası: ${breakInfo}</div>
-            </div>`;
+          resultDiv.innerHTML = `<div class="result-box"><h4>🏫 Esma Baydar</h4><p style="margin-top:6px;">Şu anda <strong>Birleştirilmiş Sınıf</strong> dersindedir.</p><div class="time-badge">${hour}. Ders (${timeSlot})</div><div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Öğle Arası: ${breakInfo}</div></div>`;
         }
         return;
       }
-
-      // 3. Asude Genç (Okul Öncesi Öğretmeni)
       if (teacher === "Asude Genç") {
         if (hour === 7) {
-          resultDiv.innerHTML = `
-            <div class="result-box warning-box">
-              <h4>⚠️ Dersi Yoktur!</h4>
-              <p style="margin-top:6px;">Anasınıfı öğretmeni olduğu için 7. ders saatine dahil değildir.</p>
-              <div class="time-badge">${timeSlot}</div>
-            </div>`;
+          resultDiv.innerHTML = `<div class="result-box warning-box"><h4>⚠️ Dersi Yoktur!</h4><p style="margin-top:6px;">Anasınıfı öğretmeni olduğu için 7. ders saatine dahil değildir.</p><div class="time-badge">${timeSlot}</div></div>`;
         } else {
-          resultDiv.innerHTML = `
-            <div class="result-box">
-              <h4>🎨 Asude Genç</h4>
-              <p style="margin-top:6px;">Şu anda <strong>Anasınıfı</strong> şubesindedir.</p>
-              <div class="time-badge">${hour}. Ders (${timeSlot})</div>
-              <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Not: Öğle Arası: ${breakInfo}</div>
-            </div>`;
+          resultDiv.innerHTML = `<div class="result-box"><h4>🎨 Asude Genç</h4><p style="margin-top:6px;">Şu anda <strong>Anasınıfı</strong> şubesindedir.</p><div class="time-badge">${hour}. Ders (${timeSlot})</div><div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Öğle Arası: ${breakInfo}</div></div>`;
         }
         return;
       }
 
-      // 4. Branş Öğretmenleri & Müdür Yardımcısı
       const teacherSchedule = timetable[teacher];
       if (teacherSchedule && teacherSchedule[day] && teacherSchedule[day][hour]) {
         const item = teacherSchedule[day][hour];
@@ -539,7 +801,7 @@
             <h4>📚 ${teacher}</h4>
             <p style="margin-top:6px;">Şu anda <strong>${cls}</strong> sınıfında <strong>${subName} (${subCode})</strong> dersindedir.</p>
             <div class="time-badge">${hour}. Ders (${timeSlot})</div>
-            <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Not: Öğle Arası: ${breakInfo}</div>
+            <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Öğle Arası: ${breakInfo}</div>
           </div>`;
       } else {
         if (teacher === "Ensar Çetinkaya") {
@@ -559,6 +821,50 @@
         }
       }
     }
+
+    // --- 3. SINIF DERS PROGRAMI GÖRÜNTÜLEYİCİ ---
+    function renderClassSchedule() {
+      const cls = document.getElementById('class-select').value;
+      const day = document.getElementById('class-day-select').value;
+      const res = document.getElementById('class-schedule-result');
+
+      const isCuma = day === "Cuma";
+      const slots = isCuma ? timeTableSlots.cuma : timeTableSlots.normal;
+
+      let html = `<div class="table-responsive"><table><thead><tr><th>Saat</th><th>Ders</th><th>Öğretmen</th></tr></thead><tbody>`;
+
+      for (let h = 1; h <= 7; h++) {
+        let lesson = "-";
+        let teacher = "-";
+
+        if (cls === "Birleştirilmiş Sınıf") {
+          if (h === 7) { lesson = "Ders Yok"; teacher = "-"; }
+          else { lesson = "Birleştirilmiş Sınıf Dersi"; teacher = "Esma Baydar"; }
+        } else if (cls === "Anasınıfı") {
+          if (h === 7) { lesson = "Ders Yok"; teacher = "-"; }
+          else { lesson = "Okul Öncesi Etkinlik"; teacher = "Asude Genç"; }
+        } else {
+          // Branş öğretmenlerini tara
+          for (let t in timetable) {
+            const entry = timetable[t][day] ? timetable[t][day][h] : null;
+            if (entry && entry.startsWith(cls)) {
+              const [_, subCode] = entry.split(" ");
+              lesson = `${lessonNames[subCode] || subCode} (${subCode})`;
+              teacher = t;
+              break;
+            }
+          }
+        }
+
+        html += `<tr><td><strong>${h}. Ders</strong><br><small style="color:#64748b">${slots[h].text}</small></td><td>${lesson}</td><td>${teacher}</td></tr>`;
+      }
+
+      html += `</tbody></table></div>`;
+      res.innerHTML = html;
+    }
+
+    // --- 4. NÖBETÇİ SORGULAMA & DAĞITICI ---
+    document.getElementById('duty-date-input').value = "2026-09-14";
 
     function queryDuty() {
       const dateVal = document.getElementById('duty-date-input').value;
@@ -582,6 +888,128 @@
             <p style="margin-top:6px;">Seçilen tarihe ait (${dateVal}) nöbet görevi bulunmamaktadır (Hafta sonu veya tatil olabilir).</p>
           </div>`;
       }
+    }
+
+    // OTOMATİK ADİL NÖBET DAĞITICI (GENERATOR)
+    function generateNewDutySchedule() {
+      const sDateStr = document.getElementById('gen-start-date').value;
+      const eDateStr = document.getElementById('gen-end-date').value;
+      const resDiv = document.getElementById('gen-result');
+
+      if (!sDateStr || !eDateStr) {
+        alert("Lütfen başlangıç ve bitiş tarihlerini seçin.");
+        return;
+      }
+
+      const availableTeachers = [
+        { name: "Esma Baydar", off: [] },
+        { name: "Kadir Eser", off: ["Pazartesi"] },
+        { name: "Yasemin Çakır", off: ["Pazartesi"] },
+        { name: "Demet Taşdemir", off: ["Salı", "Çarşamba"] },
+        { name: "Turan Hoca", off: ["Çarşamba"] },
+        { name: "Bahar Sarı", off: ["Cuma"] },
+        { name: "Levent Dallık", off: ["Cuma"] }
+      ];
+
+      let counts = {};
+      availableTeachers.forEach(t => counts[t.name] = { bahce: 0, bina: 0, total: 0 });
+
+      let curr = new Date(sDateStr);
+      const end = new Date(eDateStr);
+      let csvContent = "data:text/csv;charset=utf-8,Tarih,Gun,Bahce Nobetcisi,Bina Nobetcisi\n";
+      let daysCount = 0;
+
+      while (curr <= end) {
+        const dayIdx = curr.getDay();
+        if (dayIdx >= 1 && dayIdx <= 5) { // Pazartesi - Cuma
+          const dayName = dayNamesTr[dayIdx];
+          const dateISO = curr.toISOString().split("T")[0];
+
+          // Bu gün uygun öğretmenler
+          const eligible = availableTeachers.filter(t => !t.off.includes(dayName));
+
+          // En az nöbet tutanları seç (Weighted shuffle)
+          eligible.sort((a, b) => counts[a.name].total - counts[b.name].total || Math.random() - 0.5);
+
+          const bahceTeacher = eligible[0].name;
+          const binaTeacher = eligible[1].name;
+
+          counts[bahceTeacher].bahce++;
+          counts[bahceTeacher].total++;
+          counts[binaTeacher].bina++;
+          counts[binaTeacher].total++;
+
+          csvContent += `${dateISO},${dayName},${bahceTeacher},${binaTeacher}\n`;
+          daysCount++;
+        }
+        curr.setDate(curr.getDate() + 1);
+      }
+
+      // CSV İndirme Bağlantısı
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Yagcilli_Nobet_Cizelgesi_${sDateStr}_${eDateStr}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      resDiv.innerHTML = `
+        <div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">
+          <h4>✅ ${daysCount} Günlük Nöbet Başarıyla Dağıtıldı!</h4>
+          <p style="margin-top:4px;">Excel ile açılabilir CSV dosyası otomatik olarak cihazınıza indirildi.</p>
+        </div>`;
+    }
+
+    // --- 5. TAŞIMALI VE NÖBET NOTLARI (LOCALSTORAGE) ---
+    document.getElementById('note-date').valueAsDate = new Date();
+
+    function saveDutyNote() {
+      const d = document.getElementById('note-date').value;
+      const s = document.getElementById('note-service').value.trim();
+      const t = document.getElementById('note-text').value.trim();
+
+      if (!d || (!s && !t)) {
+        alert("Lütfen tarih ve en az bir not girin.");
+        return;
+      }
+
+      const notes = JSON.parse(localStorage.getItem('duty_notes') || "[]");
+      notes.unshift({ id: Date.now(), date: d, service: s, note: t });
+      localStorage.setItem('duty_notes', JSON.stringify(notes));
+
+      document.getElementById('note-service').value = "";
+      document.getElementById('note-text').value = "";
+      renderNotesList();
+    }
+
+    function deleteNote(id) {
+      let notes = JSON.parse(localStorage.getItem('duty_notes') || "[]");
+      notes = notes.filter(n => n.id !== id);
+      localStorage.setItem('duty_notes', JSON.stringify(notes));
+      renderNotesList();
+    }
+
+    function renderNotesList() {
+      const div = document.getElementById('saved-notes-list');
+      const notes = JSON.parse(localStorage.getItem('duty_notes') || "[]");
+
+      if (notes.length === 0) {
+        div.innerHTML = `<p style="font-size:0.8rem; color:#64748b;">Henüz kayıtlı not bulunmuyor.</p>`;
+        return;
+      }
+
+      let html = `<h4 style="font-size:0.95rem; color:var(--primary); margin-bottom:8px;">Kayıtlı Notlar</h4>`;
+      notes.forEach(n => {
+        html += `
+          <div class="duty-card" style="position:relative;">
+            <div style="font-size:0.75rem; color:var(--muted); font-weight:700;">📅 ${n.date}</div>
+            ${n.service ? `<div style="font-size:0.85rem; margin-top:4px;"><strong>🚌 Servis:</strong> ${n.service}</div>` : ''}
+            ${n.note ? `<div style="font-size:0.85rem; margin-top:4px;"><strong>📝 Olay/Not:</strong> ${n.note}</div>` : ''}
+            <button onclick="deleteNote(${n.id})" style="position:absolute; right:10px; top:10px; background:none; border:none; color:var(--danger); font-size:0.8rem; cursor:pointer; font-weight:700;">Sil</button>
+          </div>`;
+      });
+      div.innerHTML = html;
     }
   </script>
 </body>
