@@ -11,7 +11,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
-  
+
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <style>
     :root {
       --primary: #1e3a8a;
@@ -285,6 +289,105 @@
       color: #334155;
       font-weight: 600;
     }
+
+    .card-icon svg {
+      width: 26px;
+      height: 26px;
+      stroke: var(--secondary);
+      display: block;
+    }
+
+    table.modern-table {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.06);
+    }
+
+    table.modern-table th {
+      background: #dbeafe;
+      color: var(--primary);
+      font-size: 0.8rem;
+    }
+
+    table.modern-table tr:nth-child(even) td {
+      background: #f0f7ff;
+    }
+
+    table.modern-table td, table.modern-table th {
+      padding: 10px 12px;
+    }
+
+    .upload-box {
+      border: 2px dashed #93c5fd;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      background: #eff6ff;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+
+    .upload-box input {
+      display: none;
+    }
+
+    .upload-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--secondary);
+    }
+
+    .upload-hint {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .tabs-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 9px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: #475569;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .exam-card {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 8px;
+    }
+
+    .exam-donem-title {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 0.82rem;
+      margin-top: 14px;
+      margin-bottom: 2px;
+    }
+
+    .exam-form {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border);
+    }
   </style>
 </head>
 <body>
@@ -311,15 +414,23 @@
           <div class="card-title">Yağcıllı Ortaokulu Öğretmenleri</div>
           <div class="card-sub">Öğretmen Bazlı Ders & Sınıf Sorgulama</div>
         </div>
-        <div class="card-icon">👨‍🏫</div>
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/></svg></div>
+      </div>
+
+      <div class="card" onclick="openPage('teacher-schedule-view')">
+        <div>
+          <div class="card-title">Öğretmen Ders Programları</div>
+          <div class="card-sub">Öğretmen Bazlı Haftalık Tam Program</div>
+        </div>
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg></div>
       </div>
 
       <div class="card" onclick="openPage('classes-view')">
         <div>
           <div class="card-title">Sınıf Ders Programları</div>
-          <div class="card-sub">5/A, 6/A, 7/A, 8/A Şube Akışları</div>
+          <div class="card-sub">5/A, 6/A, 7/A, 8/A Şube Akışları & Sınav Tarihleri</div>
         </div>
-        <div class="card-icon">🏫</div>
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V6a2 2 0 0 1 2-2h9l5 5v13"/><path d="M15 4v5h5"/><path d="M8 13h8M8 17h5"/></svg></div>
       </div>
 
       <div class="card" onclick="openPage('duty-view')">
@@ -327,7 +438,7 @@
           <div class="card-title">Yağcıllı Ortaokulu Nöbetçi Öğretmenler</div>
           <div class="card-sub">Günlük Nöbet Çizelgesi & Dağıtıcı</div>
         </div>
-        <div class="card-icon">🛡️</div>
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></div>
       </div>
 
       <div class="card" onclick="openPage('notes-view')">
@@ -335,7 +446,7 @@
           <div class="card-title">Nöbet & Servis Not Defteri</div>
           <div class="card-sub">Taşımalı Servis & Günlük Olay Takibi</div>
         </div>
-        <div class="card-icon">📝</div>
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
       </div>
     </div>
 
@@ -396,14 +507,54 @@
       <div id="teacher-result"></div>
     </div>
 
+    <!-- 2B. ÖĞRETMEN BAZLI HAFTALIK TAM PROGRAM -->
+    <div id="teacher-schedule-view" class="view">
+      <button class="btn-back" onclick="openPage('home-view')">← Ana Sayfa</button>
+      <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 14px; font-size: 1.35rem;">Öğretmen Ders Programı</h2>
+
+      <div class="form-group">
+        <label>Öğretmen Seçin:</label>
+        <select id="teacher-schedule-select" onchange="renderTeacherSchedule()">
+          <option value="Kadir Eser">Kadir Eser (Fen Bilimleri)</option>
+          <option value="Yasemin Çakır">Yasemin Çakır (Matematik)</option>
+          <option value="Bahar Sarı">Bahar Sarı (İngilizce)</option>
+          <option value="Levent Dallık">Levent Dallık (Sosyal Bilgiler)</option>
+          <option value="Esma Baydar">Esma Baydar (Sınıf Öğretmeni)</option>
+          <option value="Demet Demirtaş">Demet Demirtaş (Görsel Sanatlar)</option>
+          <option value="Turan Hoca">Turan Hoca (Türkçe)</option>
+          <option value="Ensar Çetinkaya">Ensar Çetinkaya (Müdür Yrd.)</option>
+          <option value="Sercan Ersöz">Sercan Ersöz (Okul Müdürü)</option>
+          <option value="Asude Genç">Asude Genç (Okul Öncesi)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Gün Seçin:</label>
+        <select id="teacher-schedule-day-select" onchange="renderTeacherSchedule()">
+          <option value="Pazartesi">Pazartesi</option>
+          <option value="Salı">Salı</option>
+          <option value="Çarşamba">Çarşamba</option>
+          <option value="Perşembe">Perşembe</option>
+          <option value="Cuma">Cuma</option>
+        </select>
+      </div>
+
+      <div id="teacher-schedule-result"></div>
+    </div>
+
     <!-- 3. SINIF BAZLI DERS PROGRAMI -->
     <div id="classes-view" class="view">
       <button class="btn-back" onclick="openPage('home-view')">← Ana Sayfa</button>
       <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 14px; font-size: 1.35rem;">Sınıf Ders Programı</h2>
 
+      <div class="tabs-row">
+        <button class="tab-btn active" id="class-tab-schedule" onclick="switchClassTab('schedule')">📅 Ders Programı</button>
+        <button class="tab-btn" id="class-tab-exams" onclick="switchClassTab('exams')">📋 Sınav Tarihleri</button>
+      </div>
+
       <div class="form-group">
         <label>Sınıf Seçin:</label>
-        <select id="class-select" onchange="renderClassSchedule()">
+        <select id="class-select" onchange="onClassChange()">
           <option value="5/A">5/A Sınıfı</option>
           <option value="6/A">6/A Sınıfı</option>
           <option value="7/A">7/A Sınıfı</option>
@@ -413,18 +564,61 @@
         </select>
       </div>
 
-      <div class="form-group">
-        <label>Gün Seçin:</label>
-        <select id="class-day-select" onchange="renderClassSchedule()">
-          <option value="Pazartesi">Pazartesi</option>
-          <option value="Salı">Salı</option>
-          <option value="Çarşamba">Çarşamba</option>
-          <option value="Perşembe">Perşembe</option>
-          <option value="Cuma">Cuma</option>
-        </select>
+      <div id="class-schedule-tab">
+        <div class="form-group">
+          <label>Gün Seçin:</label>
+          <select id="class-day-select" onchange="renderClassSchedule()">
+            <option value="Pazartesi">Pazartesi</option>
+            <option value="Salı">Salı</option>
+            <option value="Çarşamba">Çarşamba</option>
+            <option value="Perşembe">Perşembe</option>
+            <option value="Cuma">Cuma</option>
+          </select>
+        </div>
+
+        <div id="class-schedule-result"></div>
+
+        <div class="upload-box" onclick="document.getElementById('schedule-excel-input').click()">
+          <input type="file" id="schedule-excel-input" accept=".xlsx,.xls,.csv" onchange="handleScheduleExcelUpload(event)">
+          <div class="upload-label">📤 Ders Programı Excel Dosyası Yükle</div>
+          <div class="upload-hint">Yüklediğinizde tüm site (öğretmen, sınıf ve canlı durum programları) otomatik güncellenir</div>
+        </div>
+        <div id="schedule-upload-result"></div>
       </div>
 
-      <div id="class-schedule-result"></div>
+      <div id="class-exams-tab" style="display:none;">
+        <div id="class-exams-list"></div>
+
+        <div class="exam-form">
+          <h3 style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.05rem; color: var(--primary); margin-bottom: 10px;">Sınav Ekle / Güncelle</h3>
+          <p style="font-size:0.78rem; color: var(--muted); margin-bottom: 10px;">Eklediğiniz sınav tarihi tüm öğretmenler ve kullanıcılar tarafından görüntülenebilir.</p>
+
+          <div class="form-group">
+            <label>Branş Seçin:</label>
+            <select id="exam-branch-select"></select>
+          </div>
+          <div class="form-group">
+            <label>Dönem Seçin:</label>
+            <select id="exam-donem-select">
+              <option value="1">1. Dönem</option>
+              <option value="2">2. Dönem</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sınav No Seçin:</label>
+            <select id="exam-no-select">
+              <option value="1">1. Sınav</option>
+              <option value="2">2. Sınav</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sınav Tarihi:</label>
+            <input type="date" id="exam-date-input">
+          </div>
+          <button class="btn-submit" onclick="addExam()">Sınavı Kaydet</button>
+          <div id="exam-save-result"></div>
+        </div>
+      </div>
     </div>
 
     <!-- 4. NÖBETÇİLER VE OTOMATİK DAĞITICI -->
@@ -438,6 +632,13 @@
       </div>
       <button class="btn-submit" onclick="queryDuty()">Nöbetçileri Göster</button>
       <div id="duty-result"></div>
+
+      <div class="upload-box" onclick="document.getElementById('duty-excel-input').click()">
+        <input type="file" id="duty-excel-input" accept=".xlsx,.xls,.csv" onchange="handleDutyExcelUpload(event)">
+        <div class="upload-label">📤 Nöbet Çizelgesi Excel Dosyası Yükle</div>
+        <div class="upload-hint">Yüklediğinizde nöbet takvimi tüm kullanıcılarda otomatik güncellenir</div>
+      </div>
+      <div id="duty-upload-result"></div>
 
       <hr style="margin: 20px 0; border: 0; border-top: 1px dashed var(--border);">
 
@@ -508,7 +709,7 @@
       }
     };
 
-    const lessonNames = {
+    let lessonNames = {
       "TR": "Türkçe", "MAT": "Matematik", "FEN": "Fen Bilimleri", "SOS": "Sosyal Bilgiler",
       "T.C.": "T.C. İnkılap Tarihi", "YB": "Yabancı Dil", "BEDEN": "Beden Eğitimi", "DİNKÜ": "Din Kültürü",
       "GR": "Görsel Sanatlar", "MZK": "Müzik", "TKTA": "Teknoloji Tasarım", "BLŞ": "Bilişim",
@@ -517,7 +718,7 @@
     };
 
     // Teyit Edilmiş Tam Ders Dağılımı
-    const timetable = {
+    let timetable = {
       "Ensar Çetinkaya": {
         "Pazartesi": { 5: "8/A BEDEN", 6: "8/A BEDEN" },
         "Salı": { 1: "6/A BEDEN", 2: "6/A BEDEN" },
@@ -570,7 +771,7 @@
     };
 
     // Excel Dosyasındaki Eylül, Ekim, Kasım, Aralık 2026 Nöbet Veritabanı
-    const dutyDatabase = {
+    let dutyDatabase = {
       "2026-09-14": { bahce: "Bahar Sarı", bina: "Levent Dallık" },
       "2026-09-15": { bahce: "Esma Baydar", bina: "Yasemin Çakır" },
       "2026-09-16": { bahce: "Kadir Eser", bina: "Levent Dallık" },
@@ -645,6 +846,64 @@
       "2026-12-31": { bahce: "Levent Dallık", bina: "Demet Taşdemir" }
     };
 
+    // --- FIREBASE ENTEGRASYONU (Tüm Kullanıcılar Arası Paylaşımlı Veri) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDapb1RCUQ-Gwyc5hVxseSwxgYgnAnlTBc",
+      authDomain: "yagcilli-personel.firebaseapp.com",
+      projectId: "yagcilli-personel",
+      storageBucket: "yagcilli-personel.firebasestorage.app",
+      messagingSenderId: "40166908484",
+      appId: "1:40166908484:web:6831897e1d55ffe8ce1211"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let examsCache = {};
+
+    db.collection('config').doc('timetable').onSnapshot(docSnap => {
+      if (docSnap.exists && docSnap.data().timetable) {
+        timetable = docSnap.data().timetable;
+        syncTeacherDropdowns();
+        refreshActiveView();
+      }
+    }, err => console.warn('Ders programı senkron hatası:', err));
+
+    db.collection('config').doc('duty').onSnapshot(docSnap => {
+      if (docSnap.exists && docSnap.data().dutyDatabase) {
+        dutyDatabase = docSnap.data().dutyDatabase;
+        refreshActiveView();
+      }
+    }, err => console.warn('Nöbet çizelgesi senkron hatası:', err));
+
+    db.collection('config').doc('lessonNames').onSnapshot(docSnap => {
+      if (docSnap.exists && docSnap.data().lessonNames) {
+        Object.assign(lessonNames, docSnap.data().lessonNames);
+        refreshActiveView();
+      }
+    }, err => console.warn('Ders adı sözlüğü senkron hatası:', err));
+
+    db.collection('exams').onSnapshot(snapshot => {
+      const next = {};
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        if (!next[d.class]) next[d.class] = [];
+        next[d.class].push({ id: docSnap.id, ...d });
+      });
+      examsCache = next;
+      const examsTab = document.getElementById('class-exams-tab');
+      if (examsTab && examsTab.style.display !== 'none' && document.getElementById('classes-view').style.display === 'block') {
+        renderExamsForClass();
+      }
+    }, err => console.warn('Sınav takvimi senkron hatası:', err));
+
+    function refreshActiveView() {
+      const visible = Array.from(document.querySelectorAll('.view')).find(v => v.style.display === 'block');
+      if (!visible) return;
+      if (visible.id === 'classes-view') renderClassSchedule();
+      if (visible.id === 'teacher-schedule-view') renderTeacherSchedule();
+      if (visible.id === 'live-view') renderLiveView();
+    }
+
     // SAYFA GEÇİŞİ
     function openPage(pageId) {
       document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
@@ -655,7 +914,8 @@
       } else {
         document.getElementById(pageId).style.display = 'block';
         if (pageId === 'live-view') renderLiveView();
-        if (pageId === 'classes-view') renderClassSchedule();
+        if (pageId === 'classes-view') { switchClassTab('schedule'); renderClassSchedule(); }
+        if (pageId === 'teacher-schedule-view') renderTeacherSchedule();
         if (pageId === 'notes-view') renderNotesList();
       }
     }
@@ -722,7 +982,7 @@
       }
 
       // Aktif ders varsa tüm öğretmenlerin konumunu listele
-      let html = `<div class="table-responsive"><table><thead><tr><th>Öğretmen</th><th>Sınıf / Görev</th><th>Ders</th></tr></thead><tbody>`;
+      let html = `<div class="table-responsive"><table class="modern-table"><thead><tr><th>Öğretmen</th><th>Sınıf / Görev</th><th>Ders</th></tr></thead><tbody>`;
       
       const teacherList = ["Ensar Çetinkaya", "Bahar Sarı", "Levent Dallık", "Kadir Eser", "Yasemin Çakır", "Turan Hoca", "Demet Demirtaş", "Esma Baydar", "Asude Genç", "Sercan Ersöz"];
 
@@ -831,7 +1091,7 @@
       const isCuma = day === "Cuma";
       const slots = isCuma ? timeTableSlots.cuma : timeTableSlots.normal;
 
-      let html = `<div class="table-responsive"><table><thead><tr><th>Saat</th><th>Ders</th><th>Öğretmen</th></tr></thead><tbody>`;
+      let html = `<div class="table-responsive"><table class="modern-table"><thead><tr><th>Saat</th><th>Ders</th><th>Öğretmen</th></tr></thead><tbody>`;
 
       for (let h = 1; h <= 7; h++) {
         let lesson = "-";
@@ -861,6 +1121,320 @@
 
       html += `</tbody></table></div>`;
       res.innerHTML = html;
+    }
+
+    function onClassChange() {
+      renderClassSchedule();
+      renderExamsForClass();
+    }
+
+    // --- 3B. ÖĞRETMEN BAZLI HAFTALIK TAM PROGRAM GÖRÜNTÜLEYİCİ ---
+    function renderTeacherSchedule() {
+      const teacher = document.getElementById('teacher-schedule-select').value;
+      const day = document.getElementById('teacher-schedule-day-select').value;
+      const res = document.getElementById('teacher-schedule-result');
+
+      const isCuma = day === "Cuma";
+      const slots = isCuma ? timeTableSlots.cuma : timeTableSlots.normal;
+
+      let html = `<div class="table-responsive"><table class="modern-table"><thead><tr><th>Saat</th><th>Sınıf</th><th>Ders</th></tr></thead><tbody>`;
+
+      for (let h = 1; h <= 7; h++) {
+        let cls = "-";
+        let lesson = "-";
+
+        if (teacher === "Sercan Ersöz") {
+          cls = "Makam"; lesson = "İdari Görev";
+        } else if (teacher === "Esma Baydar") {
+          if (h === 7) { cls = "-"; lesson = "Dersi Yok"; }
+          else { cls = "Birleştirilmiş Sınıf"; lesson = "Sınıf Öğretmenliği"; }
+        } else if (teacher === "Asude Genç") {
+          if (h === 7) { cls = "-"; lesson = "Dersi Yok"; }
+          else { cls = "Anasınıfı"; lesson = "Okul Öncesi Etkinlik"; }
+        } else {
+          const entry = timetable[teacher] && timetable[teacher][day] ? timetable[teacher][day][h] : null;
+          if (entry) {
+            const [c, subCode] = entry.split(" ");
+            cls = c; lesson = `${lessonNames[subCode] || subCode} (${subCode})`;
+          } else if (teacher === "Ensar Çetinkaya") {
+            cls = "Müdür Yrd. Odası"; lesson = "İdari Görev";
+          } else {
+            cls = "-"; lesson = "Boş Saat";
+          }
+        }
+
+        html += `<tr><td><strong>${h}. Ders</strong><br><small style="color:#64748b">${slots[h].text}</small></td><td>${cls}</td><td>${lesson}</td></tr>`;
+      }
+
+      html += `</tbody></table></div>`;
+      res.innerHTML = html;
+    }
+
+    // --- 3C. SINAV TAKVİMİ (FIREBASE İLE TÜM KULLANICILARDA PAYLAŞIMLI) ---
+    function switchClassTab(tab) {
+      document.getElementById('class-tab-schedule').classList.toggle('active', tab === 'schedule');
+      document.getElementById('class-tab-exams').classList.toggle('active', tab === 'exams');
+      document.getElementById('class-schedule-tab').style.display = tab === 'schedule' ? 'block' : 'none';
+      document.getElementById('class-exams-tab').style.display = tab === 'exams' ? 'block' : 'none';
+      if (tab === 'exams') {
+        populateExamBranchSelect();
+        renderExamsForClass();
+      }
+    }
+
+    function populateExamBranchSelect() {
+      const sel = document.getElementById('exam-branch-select');
+      if (!sel || sel.dataset.filled) return;
+      const branches = Array.from(new Set(Object.values(lessonNames))).sort((a, b) => a.localeCompare(b, 'tr'));
+      sel.innerHTML = branches.map(b => `<option value="${b}">${b}</option>`).join('');
+      sel.dataset.filled = "1";
+    }
+
+    function renderExamsForClass() {
+      const cls = document.getElementById('class-select').value;
+      const div = document.getElementById('class-exams-list');
+      if (!div) return;
+
+      const list = (examsCache[cls] || []).slice().sort((a, b) =>
+        (a.donem - b.donem) || (a.sinavNo - b.sinavNo) || String(a.branch).localeCompare(String(b.branch), 'tr')
+      );
+
+      if (list.length === 0) {
+        div.innerHTML = `<p style="font-size:0.82rem; color:var(--muted);">Bu sınıf için henüz sınav tarihi girilmemiş.</p>`;
+        return;
+      }
+
+      let html = '';
+      [1, 2].forEach(donem => {
+        const donemExams = list.filter(e => String(e.donem) === String(donem));
+        if (donemExams.length === 0) return;
+        html += `<div class="exam-donem-title">${donem}. Dönem</div>`;
+        donemExams.forEach(e => {
+          let dateText = e.date;
+          const d = new Date(e.date);
+          if (!isNaN(d)) {
+            dateText = d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', weekday: 'long' });
+          }
+          html += `<div class="exam-card"><strong>${e.branch}</strong> — ${e.sinavNo}. Sınav<div class="time-badge">${dateText}</div></div>`;
+        });
+      });
+      div.innerHTML = html;
+    }
+
+    function addExam() {
+      const cls = document.getElementById('class-select').value;
+      const branch = document.getElementById('exam-branch-select').value;
+      const donem = document.getElementById('exam-donem-select').value;
+      const sinavNo = document.getElementById('exam-no-select').value;
+      const date = document.getElementById('exam-date-input').value;
+      const resDiv = document.getElementById('exam-save-result');
+
+      if (!date) {
+        resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Lütfen bir sınav tarihi seçin.</div>`;
+        return;
+      }
+
+      const docId = `${cls}_${branch}_${donem}_${sinavNo}`.replace(/[\/\s.]/g, '-');
+      db.collection('exams').doc(docId).set({ class: cls, branch, donem, sinavNo, date })
+        .then(() => {
+          resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">✅ Sınav kaydedildi ve tüm kullanıcılara yansıtıldı.</div>`;
+        })
+        .catch(err => {
+          resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Kaydedilemedi: ${err.message}</div>`;
+        });
+    }
+
+    // --- EXCEL YÜKLEME: DERS PROGRAMI (Dağıtmatik "Öğretmen El Programı" çıktısı) ---
+    const SCHEDULE_DAY_NAMES = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"];
+    const KNOWN_TEACHERS = ["Kadir Eser", "Yasemin Çakır", "Bahar Sarı", "Levent Dallık", "Esma Baydar", "Demet Demirtaş", "Turan Hoca", "Ensar Çetinkaya", "Sercan Ersöz", "Asude Genç", "Demet Taşdemir"];
+    const SPECIAL_TEACHERS = ["Sercan Ersöz", "Esma Baydar", "Asude Genç"];
+
+    function turkishUpper(str) {
+      return String(str).replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase().trim().replace(/\s+/g, ' ');
+    }
+
+    function turkishTitleCase(str) {
+      return String(str).split(' ').filter(Boolean).map(w => {
+        if (w.includes('.')) return w;
+        const lower = w.replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
+        const first = lower[0];
+        const capFirst = first === 'i' ? 'İ' : (first === 'ı' ? 'I' : first.toUpperCase());
+        return capFirst + lower.slice(1);
+      }).join(' ');
+    }
+
+    function resolveTeacherName(raw) {
+      const target = turkishUpper(raw);
+      const match = KNOWN_TEACHERS.find(k => turkishUpper(k) === target);
+      return match || raw.trim();
+    }
+
+    function syncTeacherDropdowns() {
+      const roster = Array.from(new Set([...SPECIAL_TEACHERS, ...Object.keys(timetable)])).sort((a, b) => a.localeCompare(b, 'tr'));
+      ['teacher-select', 'teacher-schedule-select'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const existing = new Set(Array.from(sel.options).map(o => o.value));
+        roster.forEach(name => {
+          if (!existing.has(name)) {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            sel.appendChild(opt);
+          }
+        });
+      });
+    }
+
+    function parseScheduleWorkbook(wb) {
+      const partialTimetable = {};
+      const newLessonNames = {};
+      const unmatchedTeachers = [];
+
+      wb.SheetNames.forEach(sheetName => {
+        const sheet = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+
+        let teacherRaw = null;
+        rows.forEach(row => {
+          const a = row[0] != null ? String(row[0]).trim() : '';
+          if (a === 'Öğretmen' && row[1]) {
+            teacherRaw = String(row[1]).replace(/^:\s*/, '').trim();
+          }
+        });
+        if (!teacherRaw) return;
+
+        const teacherName = resolveTeacherName(teacherRaw);
+        if (!KNOWN_TEACHERS.some(k => turkishUpper(k) === turkishUpper(teacherRaw)) && !unmatchedTeachers.includes(teacherRaw)) {
+          unmatchedTeachers.push(teacherRaw);
+        }
+
+        if (!partialTimetable[teacherName]) {
+          partialTimetable[teacherName] = { "Pazartesi": {}, "Salı": {}, "Çarşamba": {}, "Perşembe": {}, "Cuma": {} };
+        }
+
+        rows.forEach(row => {
+          const dayCell = row[0] != null ? String(row[0]).trim() : '';
+          if (!SCHEDULE_DAY_NAMES.includes(dayCell)) return;
+          for (let h = 1; h <= 7; h++) {
+            const cell = row[h];
+            if (!cell) continue;
+            const parts = String(cell).split('\n').map(s => s.trim()).filter(Boolean);
+            if (parts.length < 2) continue;
+            const [cls, code] = parts;
+            partialTimetable[teacherName][dayCell][h] = `${cls} ${code}`;
+          }
+        });
+
+        let inSummary = false;
+        rows.forEach(row => {
+          const a = row[0];
+          if (typeof a === 'string' && a.trim() === 'S' && String(row[1] || '').trim() === 'Ders') {
+            inSummary = true;
+            return;
+          }
+          if (inSummary && typeof a === 'number') {
+            const code = row[1] != null ? String(row[1]).trim() : '';
+            const fullName = row[2] != null ? String(row[2]).trim() : '';
+            if (code && fullName) newLessonNames[code] = turkishTitleCase(fullName);
+          }
+        });
+      });
+
+      return { partialTimetable, newLessonNames, unmatchedTeachers };
+    }
+
+    function handleScheduleExcelUpload(event) {
+      const file = event.target.files[0];
+      const resDiv = document.getElementById('schedule-upload-result');
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const wb = XLSX.read(data, { type: 'array' });
+          const { partialTimetable, newLessonNames, unmatchedTeachers } = parseScheduleWorkbook(wb);
+          const teacherCount = Object.keys(partialTimetable).length;
+
+          if (teacherCount === 0) {
+            resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosyada tanınabilir bir öğretmen ders programı bulunamadı. Dosyanın "Dağıtmatik" öğretmen programı çıktısı formatında olduğundan emin olun.</div>`;
+            return;
+          }
+
+          const mergedTimetable = Object.assign({}, timetable, partialTimetable);
+          const mergedLessonNames = Object.assign({}, lessonNames, newLessonNames);
+
+          Promise.all([
+            db.collection('config').doc('timetable').set({ timetable: mergedTimetable }),
+            db.collection('config').doc('lessonNames').set({ lessonNames: mergedLessonNames })
+          ]).then(() => {
+            timetable = mergedTimetable;
+            lessonNames = mergedLessonNames;
+            syncTeacherDropdowns();
+            let msg = `✅ ${teacherCount} öğretmenin ders programı güncellendi ve tüm kullanıcılara aktarıldı.`;
+            if (unmatchedTeachers.length) {
+              msg += `<br><span style="font-size:0.75rem;">⚠️ Bilinen öğretmen listesiyle otomatik eşleşmeyen isim(ler): ${unmatchedTeachers.join(', ')} — yazımı kontrol edin, program yine de kaydedildi.</span>`;
+            }
+            resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">${msg}</div>`;
+            renderClassSchedule();
+          }).catch(err => {
+            resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Firebase'e kaydedilemedi: ${err.message}</div>`;
+          });
+        } catch (err) {
+          resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosya okunamadı: ${err.message}</div>`;
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // --- EXCEL YÜKLEME: NÖBET ÇİZELGESİ ---
+    function handleDutyExcelUpload(event) {
+      const file = event.target.files[0];
+      const resDiv = document.getElementById('duty-upload-result');
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const wb = XLSX.read(data, { type: 'array', cellDates: true });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+          const newDuty = {};
+          rows.forEach(row => {
+            let dateVal = row['Tarih'];
+            if (dateVal instanceof Date) {
+              const y = dateVal.getFullYear(), m = String(dateVal.getMonth() + 1).padStart(2, '0'), d = String(dateVal.getDate()).padStart(2, '0');
+              dateVal = `${y}-${m}-${d}`;
+            } else {
+              dateVal = String(dateVal).trim();
+            }
+            const bahce = String(row['Bahçe Nöbetçisi'] ?? row['Bahce Nobetcisi'] ?? '').trim();
+            const bina = String(row['Bina Nöbetçisi'] ?? row['Bina Nobetcisi'] ?? '').trim();
+            if (!dateVal || !bahce || !bina) return;
+            newDuty[dateVal] = { bahce, bina };
+          });
+
+          if (Object.keys(newDuty).length === 0) {
+            resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosyada beklenen sütunlar bulunamadı (Tarih, Bahçe Nöbetçisi, Bina Nöbetçisi). Lütfen dosya formatını kontrol edin.</div>`;
+            return;
+          }
+
+          dutyDatabase = newDuty;
+          db.collection('config').doc('duty').set({ dutyDatabase: newDuty })
+            .then(() => {
+              resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">✅ Nöbet çizelgesi güncellendi ve tüm kullanıcılara aktarıldı.</div>`;
+            })
+            .catch(err => {
+              resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Firebase'e kaydedilemedi: ${err.message}</div>`;
+            });
+        } catch (err) {
+          resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosya okunamadı: ${err.message}</div>`;
+        }
+      };
+      reader.readAsArrayBuffer(file);
     }
 
     // --- 4. NÖBETÇİ SORGULAMA & DAĞITICI ---
@@ -1011,6 +1585,8 @@
       });
       div.innerHTML = html;
     }
+
+    syncTeacherDropdowns();
   </script>
 </body>
 </html>
