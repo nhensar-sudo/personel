@@ -528,7 +528,12 @@
         </select>
       </div>
 
-      <div class="form-group">
+      <div class="tabs-row">
+        <button class="tab-btn active" id="teacher-schedule-mode-daily" onclick="switchTeacherScheduleMode('daily')">📅 Günlük</button>
+        <button class="tab-btn" id="teacher-schedule-mode-weekly" onclick="switchTeacherScheduleMode('weekly')">🗓️ Haftalık</button>
+      </div>
+
+      <div class="form-group" id="teacher-schedule-day-group">
         <label>Gün Seçin:</label>
         <select id="teacher-schedule-day-select" onchange="renderTeacherSchedule()">
           <option value="Pazartesi">Pazartesi</option>
@@ -565,7 +570,12 @@
       </div>
 
       <div id="class-schedule-tab">
-        <div class="form-group">
+        <div class="tabs-row">
+          <button class="tab-btn active" id="class-schedule-mode-daily" onclick="switchClassScheduleMode('daily')">📅 Günlük</button>
+          <button class="tab-btn" id="class-schedule-mode-weekly" onclick="switchClassScheduleMode('weekly')">🗓️ Haftalık</button>
+        </div>
+
+        <div class="form-group" id="class-day-group">
           <label>Gün Seçin:</label>
           <select id="class-day-select" onchange="renderClassSchedule()">
             <option value="Pazartesi">Pazartesi</option>
@@ -1090,44 +1100,87 @@
     }
 
     // --- 3. SINIF DERS PROGRAMI GÖRÜNTÜLEYİCİ ---
-    function renderClassSchedule() {
-      const cls = document.getElementById('class-select').value;
-      const day = document.getElementById('class-day-select').value;
-      const res = document.getElementById('class-schedule-result');
+    const WEEK_DAYS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma"];
+    let classScheduleMode = 'daily';
+    let teacherScheduleMode = 'daily';
 
+    function switchClassScheduleMode(mode) {
+      classScheduleMode = mode;
+      document.getElementById('class-schedule-mode-daily').classList.toggle('active', mode === 'daily');
+      document.getElementById('class-schedule-mode-weekly').classList.toggle('active', mode === 'weekly');
+      document.getElementById('class-day-group').style.display = mode === 'daily' ? 'block' : 'none';
+      renderClassSchedule();
+    }
+
+    function switchTeacherScheduleMode(mode) {
+      teacherScheduleMode = mode;
+      document.getElementById('teacher-schedule-mode-daily').classList.toggle('active', mode === 'daily');
+      document.getElementById('teacher-schedule-mode-weekly').classList.toggle('active', mode === 'weekly');
+      document.getElementById('teacher-schedule-day-group').style.display = mode === 'daily' ? 'block' : 'none';
+      renderTeacherSchedule();
+    }
+
+    function getClassCell(cls, day, h) {
+      let lesson = "-", teacher = "-";
+      if (cls === "Birleştirilmiş Sınıf") {
+        if (h !== 7) { lesson = "Birleştirilmiş Sınıf Dersi"; teacher = "Esma Baydar"; }
+      } else if (cls === "Anasınıfı") {
+        if (h !== 7) { lesson = "Okul Öncesi Etkinlik"; teacher = "Asude Genç"; }
+      } else {
+        for (let t in timetable) {
+          const entry = timetable[t][day] ? timetable[t][day][h] : null;
+          if (entry && entry.startsWith(cls)) {
+            const [_, subCode] = entry.split(" ");
+            lesson = lessonNames[subCode] || subCode;
+            teacher = t;
+            break;
+          }
+        }
+      }
+      return { lesson, teacher };
+    }
+
+    function renderClassScheduleDaily(cls, day, res) {
       const isCuma = day === "Cuma";
       const slots = isCuma ? timeTableSlots.cuma : timeTableSlots.normal;
 
       let html = `<div class="table-responsive"><table class="modern-table"><thead><tr><th>Saat</th><th>Ders</th><th>Öğretmen</th></tr></thead><tbody>`;
 
       for (let h = 1; h <= 7; h++) {
-        let lesson = "-";
-        let teacher = "-";
-
-        if (cls === "Birleştirilmiş Sınıf") {
-          if (h === 7) { lesson = "Ders Yok"; teacher = "-"; }
-          else { lesson = "Birleştirilmiş Sınıf Dersi"; teacher = "Esma Baydar"; }
-        } else if (cls === "Anasınıfı") {
-          if (h === 7) { lesson = "Ders Yok"; teacher = "-"; }
-          else { lesson = "Okul Öncesi Etkinlik"; teacher = "Asude Genç"; }
-        } else {
-          // Branş öğretmenlerini tara
-          for (let t in timetable) {
-            const entry = timetable[t][day] ? timetable[t][day][h] : null;
-            if (entry && entry.startsWith(cls)) {
-              const [_, subCode] = entry.split(" ");
-              lesson = `${lessonNames[subCode] || subCode} (${subCode})`;
-              teacher = t;
-              break;
-            }
-          }
-        }
-
+        const { lesson, teacher } = getClassCell(cls, day, h);
         html += `<tr><td><strong>${h}. Ders</strong><br><small style="color:#64748b">${slots[h].text}</small></td><td>${lesson}</td><td>${teacher}</td></tr>`;
       }
 
       html += `</tbody></table></div>`;
       res.innerHTML = html;
+    }
+
+    function renderClassScheduleWeekly(cls, res) {
+      let html = `<div class="table-responsive"><table class="modern-table"><thead><tr><th>Saat</th>${WEEK_DAYS.map(d => `<th>${d}</th>`).join('')}</tr></thead><tbody>`;
+
+      for (let h = 1; h <= 7; h++) {
+        html += `<tr><td><strong>${h}.</strong></td>`;
+        WEEK_DAYS.forEach(day => {
+          const { lesson, teacher } = getClassCell(cls, day, h);
+          html += `<td style="font-size:0.78rem;">${lesson}${teacher !== '-' ? `<br><small style="color:var(--muted)">${teacher}</small>` : ''}</td>`;
+        });
+        html += `</tr>`;
+      }
+
+      html += `</tbody></table></div>`;
+      res.innerHTML = html;
+    }
+
+    function renderClassSchedule() {
+      const cls = document.getElementById('class-select').value;
+      const res = document.getElementById('class-schedule-result');
+
+      if (classScheduleMode === 'weekly') {
+        renderClassScheduleWeekly(cls, res);
+      } else {
+        const day = document.getElementById('class-day-select').value;
+        renderClassScheduleDaily(cls, day, res);
+      }
     }
 
     function onClassChange() {
@@ -1136,45 +1189,71 @@
     }
 
     // --- 3B. ÖĞRETMEN BAZLI HAFTALIK TAM PROGRAM GÖRÜNTÜLEYİCİ ---
-    function renderTeacherSchedule() {
-      const teacher = document.getElementById('teacher-schedule-select').value;
-      const day = document.getElementById('teacher-schedule-day-select').value;
-      const res = document.getElementById('teacher-schedule-result');
+    function getTeacherCell(teacher, day, h) {
+      let cls = "-", lesson = "-";
+      if (teacher === "Sercan Ersöz") {
+        cls = "Makam"; lesson = "İdari Görev";
+      } else if (teacher === "Esma Baydar") {
+        if (h === 7) { cls = "-"; lesson = "Dersi Yok"; }
+        else { cls = "Birleştirilmiş Sınıf"; lesson = "Sınıf Öğretmenliği"; }
+      } else if (teacher === "Asude Genç") {
+        if (h === 7) { cls = "-"; lesson = "Dersi Yok"; }
+        else { cls = "Anasınıfı"; lesson = "Okul Öncesi Etkinlik"; }
+      } else {
+        const entry = timetable[teacher] && timetable[teacher][day] ? timetable[teacher][day][h] : null;
+        if (entry) {
+          const [c, subCode] = entry.split(" ");
+          cls = c; lesson = lessonNames[subCode] || subCode;
+        } else if (teacher === "Ensar Çetinkaya") {
+          cls = "Müdür Yrd. Odası"; lesson = "İdari Görev";
+        } else {
+          cls = "-"; lesson = "Boş Saat";
+        }
+      }
+      return { cls, lesson };
+    }
 
+    function renderTeacherScheduleDaily(teacher, day, res) {
       const isCuma = day === "Cuma";
       const slots = isCuma ? timeTableSlots.cuma : timeTableSlots.normal;
 
       let html = `<div class="table-responsive"><table class="modern-table"><thead><tr><th>Saat</th><th>Sınıf</th><th>Ders</th></tr></thead><tbody>`;
 
       for (let h = 1; h <= 7; h++) {
-        let cls = "-";
-        let lesson = "-";
-
-        if (teacher === "Sercan Ersöz") {
-          cls = "Makam"; lesson = "İdari Görev";
-        } else if (teacher === "Esma Baydar") {
-          if (h === 7) { cls = "-"; lesson = "Dersi Yok"; }
-          else { cls = "Birleştirilmiş Sınıf"; lesson = "Sınıf Öğretmenliği"; }
-        } else if (teacher === "Asude Genç") {
-          if (h === 7) { cls = "-"; lesson = "Dersi Yok"; }
-          else { cls = "Anasınıfı"; lesson = "Okul Öncesi Etkinlik"; }
-        } else {
-          const entry = timetable[teacher] && timetable[teacher][day] ? timetable[teacher][day][h] : null;
-          if (entry) {
-            const [c, subCode] = entry.split(" ");
-            cls = c; lesson = `${lessonNames[subCode] || subCode} (${subCode})`;
-          } else if (teacher === "Ensar Çetinkaya") {
-            cls = "Müdür Yrd. Odası"; lesson = "İdari Görev";
-          } else {
-            cls = "-"; lesson = "Boş Saat";
-          }
-        }
-
+        const { cls, lesson } = getTeacherCell(teacher, day, h);
         html += `<tr><td><strong>${h}. Ders</strong><br><small style="color:#64748b">${slots[h].text}</small></td><td>${cls}</td><td>${lesson}</td></tr>`;
       }
 
       html += `</tbody></table></div>`;
       res.innerHTML = html;
+    }
+
+    function renderTeacherScheduleWeekly(teacher, res) {
+      let html = `<div class="table-responsive"><table class="modern-table"><thead><tr><th>Saat</th>${WEEK_DAYS.map(d => `<th>${d}</th>`).join('')}</tr></thead><tbody>`;
+
+      for (let h = 1; h <= 7; h++) {
+        html += `<tr><td><strong>${h}.</strong></td>`;
+        WEEK_DAYS.forEach(day => {
+          const { cls, lesson } = getTeacherCell(teacher, day, h);
+          html += `<td style="font-size:0.78rem;">${cls}${lesson !== '-' ? `<br><small style="color:var(--muted)">${lesson}</small>` : ''}</td>`;
+        });
+        html += `</tr>`;
+      }
+
+      html += `</tbody></table></div>`;
+      res.innerHTML = html;
+    }
+
+    function renderTeacherSchedule() {
+      const teacher = document.getElementById('teacher-schedule-select').value;
+      const res = document.getElementById('teacher-schedule-result');
+
+      if (teacherScheduleMode === 'weekly') {
+        renderTeacherScheduleWeekly(teacher, res);
+      } else {
+        const day = document.getElementById('teacher-schedule-day-select').value;
+        renderTeacherScheduleDaily(teacher, day, res);
+      }
     }
 
     // --- 3C. SINAV TAKVİMİ (FIREBASE İLE TÜM KULLANICILARDA PAYLAŞIMLI) ---
