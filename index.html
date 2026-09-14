@@ -661,7 +661,7 @@
     <div id="notes-view" class="view">
       <button class="btn-back" onclick="openPage('home-view')">← Ana Sayfa</button>
       <h2 style="font-family: 'Playfair Display', serif; font-style: italic; margin-bottom: 12px; font-size: 1.35rem;">Nöbet & Servis Notları</h2>
-      <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 12px;">Bu alana girdiğiniz taşımalı servis ve nöbet notları cihazınızın hafızasında çevrimdışı olarak saklanır.</p>
+      <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 12px;">Bu alana girdiğiniz taşımalı servis ve nöbet notları kaydedilir ve tüm kullanıcılar tarafından görüntülenebilir.</p>
 
       <div class="form-group">
         <label>Tarih:</label>
@@ -895,6 +895,13 @@
         renderExamsForClass();
       }
     }, err => console.warn('Sınav takvimi senkron hatası:', err));
+
+    let notesCache = [];
+    db.collection('notes').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+      notesCache = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+      const notesView = document.getElementById('notes-view');
+      if (notesView && notesView.style.display === 'block') renderNotesList();
+    }, err => console.warn('Not defteri senkron hatası:', err));
 
     function refreshActiveView() {
       const visible = Array.from(document.querySelectorAll('.view')).find(v => v.style.display === 'block');
@@ -1557,7 +1564,7 @@
         </div>`;
     }
 
-    // --- 5. TAŞIMALI VE NÖBET NOTLARI (LOCALSTORAGE) ---
+    // --- 5. TAŞIMALI VE NÖBET NOTLARI (FIREBASE İLE TÜM KULLANICILARDA PAYLAŞIMLI) ---
     document.getElementById('note-date').valueAsDate = new Date();
 
     function saveDutyNote() {
@@ -1570,25 +1577,27 @@
         return;
       }
 
-      const notes = JSON.parse(localStorage.getItem('duty_notes') || "[]");
-      notes.unshift({ id: Date.now(), date: d, service: s, note: t });
-      localStorage.setItem('duty_notes', JSON.stringify(notes));
-
-      document.getElementById('note-service').value = "";
-      document.getElementById('note-text').value = "";
-      renderNotesList();
+      db.collection('notes').add({
+        date: d, service: s, note: t,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        document.getElementById('note-service').value = "";
+        document.getElementById('note-text').value = "";
+      }).catch(err => {
+        alert('Not kaydedilemedi: ' + err.message);
+      });
     }
 
     function deleteNote(id) {
-      let notes = JSON.parse(localStorage.getItem('duty_notes') || "[]");
-      notes = notes.filter(n => n.id !== id);
-      localStorage.setItem('duty_notes', JSON.stringify(notes));
-      renderNotesList();
+      if (!confirm('Bu notu silmek istediğinize emin misiniz?')) return;
+      db.collection('notes').doc(id).delete().catch(err => {
+        alert('Silinemedi: ' + err.message);
+      });
     }
 
     function renderNotesList() {
       const div = document.getElementById('saved-notes-list');
-      const notes = JSON.parse(localStorage.getItem('duty_notes') || "[]");
+      const notes = notesCache;
 
       if (notes.length === 0) {
         div.innerHTML = `<p style="font-size:0.8rem; color:#64748b;">Henüz kayıtlı not bulunmuyor.</p>`;
@@ -1602,7 +1611,7 @@
             <div style="font-size:0.75rem; color:var(--muted); font-weight:700;">📅 ${n.date}</div>
             ${n.service ? `<div style="font-size:0.85rem; margin-top:4px;"><strong>🚌 Servis:</strong> ${n.service}</div>` : ''}
             ${n.note ? `<div style="font-size:0.85rem; margin-top:4px;"><strong>📝 Olay/Not:</strong> ${n.note}</div>` : ''}
-            <button onclick="deleteNote(${n.id})" style="position:absolute; right:10px; top:10px; background:none; border:none; color:var(--danger); font-size:0.8rem; cursor:pointer; font-weight:700;">Sil</button>
+            <button onclick="deleteNote('${n.id}')" style="position:absolute; right:10px; top:10px; background:none; border:none; color:var(--danger); font-size:0.8rem; cursor:pointer; font-weight:700;">Sil</button>
           </div>`;
       });
       div.innerHTML = html;
