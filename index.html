@@ -301,12 +301,20 @@
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 2px 8px rgba(37,99,235,0.06);
+      border: 1px solid #c7d7f5;
     }
 
     table.modern-table th {
-      background: #dbeafe;
-      color: var(--primary);
-      font-size: 0.8rem;
+      background: var(--primary);
+      color: #fff;
+      font-size: 0.78rem;
+      text-align: center;
+      border: 1px solid #16306e;
+    }
+
+    table.modern-table td {
+      text-align: center;
+      border: 1px solid #dbe4f3;
     }
 
     table.modern-table tr:nth-child(even) td {
@@ -314,7 +322,7 @@
     }
 
     table.modern-table td, table.modern-table th {
-      padding: 10px 12px;
+      padding: 10px 8px;
     }
 
     .upload-box {
@@ -591,7 +599,7 @@
         <div class="upload-box" onclick="document.getElementById('schedule-excel-input').click()">
           <input type="file" id="schedule-excel-input" accept=".xlsx,.xls,.csv" onchange="handleScheduleExcelUpload(event)">
           <div class="upload-label">📤 Ders Programı Excel Dosyası Yükle</div>
-          <div class="upload-hint">Yüklediğinizde tüm site (öğretmen, sınıf ve canlı durum programları) otomatik güncellenir</div>
+          <div class="upload-hint">Dağıtmatik çıktısı veya sütun başlıklı herhangi bir liste (Öğretmen, Sınıf, Gün, Saat, Ders) otomatik tanınır — tanınamazsa sütunları eşleştirmeniz istenir. Yüklediğinizde tüm site (öğretmen, sınıf ve canlı durum programları) otomatik güncellenir.</div>
         </div>
         <div id="schedule-upload-result"></div>
       </div>
@@ -617,8 +625,10 @@
           <div class="form-group">
             <label>Sınav No Seçin:</label>
             <select id="exam-no-select">
-              <option value="1">1. Sınav</option>
-              <option value="2">2. Sınav</option>
+              <option value="sinav1">1. Sınav</option>
+              <option value="sinav2">2. Sınav</option>
+              <option value="proje1">1. Proje</option>
+              <option value="proje2">2. Proje</option>
             </select>
           </div>
           <div class="form-group">
@@ -1276,13 +1286,16 @@
       sel.dataset.filled = "1";
     }
 
+    const examTypeLabels = { sinav1: "1. Sınav", sinav2: "2. Sınav", proje1: "1. Proje", proje2: "2. Proje" };
+    const examTypeOrder = ["sinav1", "sinav2", "proje1", "proje2"];
+
     function renderExamsForClass() {
       const cls = document.getElementById('class-select').value;
       const div = document.getElementById('class-exams-list');
       if (!div) return;
 
       const list = (examsCache[cls] || []).slice().sort((a, b) =>
-        (a.donem - b.donem) || (a.sinavNo - b.sinavNo) || String(a.branch).localeCompare(String(b.branch), 'tr')
+        (a.donem - b.donem) || (examTypeOrder.indexOf(a.sinavNo) - examTypeOrder.indexOf(b.sinavNo)) || String(a.branch).localeCompare(String(b.branch), 'tr')
       );
 
       if (list.length === 0) {
@@ -1302,7 +1315,7 @@
             dateText = d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', weekday: 'long' });
           }
           html += `<div class="exam-card" style="position:relative;">
-            <strong>${e.branch}</strong> — ${e.sinavNo}. Sınav<div class="time-badge">${dateText}</div>
+            <strong>${e.branch}</strong> — ${examTypeLabels[e.sinavNo] || e.sinavNo}<div class="time-badge">${dateText}</div>
             <button onclick="deleteExam('${e.id}')" style="position:absolute; right:10px; top:10px; background:none; border:none; color:var(--danger); font-size:0.78rem; cursor:pointer; font-weight:700;">Sil</button>
           </div>`;
         });
@@ -1452,6 +1465,306 @@
       return { partialTimetable, newLessonNames, unmatchedTeachers };
     }
 
+    // --- ESNEK FORMAT ALGILAMA (Format B: sütun sırası fark etmeksizin düz liste) + MANUEL EŞLEŞTİRME ---
+    const KNOWN_CLASSES = ["5/A", "6/A", "7/A", "8/A", "Birleştirilmiş Sınıf", "Anasınıfı"];
+
+    function asciiFold(s) {
+      return String(s == null ? '' : s)
+        .replace(/İ/g, 'i').replace(/I/g, 'i')
+        .toLowerCase()
+        .replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u')
+        .replace(/[^a-z0-9]/g, '');
+    }
+
+    function matchFieldFromHeader(headerText) {
+      const f = asciiFold(headerText);
+      if (!f) return null;
+      const checks = [
+        ['day', ['gun']],
+        ['hour', ['derssaati', 'saatno', 'saat', 'periyot', 'dersno']],
+        ['class', ['sinif', 'sube']],
+        ['teacher', ['ogretmenadi', 'ogretmen', 'adsoyad', 'isim']],
+        ['lessonCode', ['derskodu', 'kod']],
+        ['lessonName', ['dersadi', 'brans', 'dersismi']],
+        ['lessonCode', ['ders']]
+      ];
+      for (const [field, keys] of checks) {
+        if (keys.some(k => f === k || f.includes(k))) return field;
+      }
+      return null;
+    }
+
+    function normalizeDayName(raw) {
+      const f = asciiFold(raw);
+      if (f.startsWith('pazartesi') || f === 'pzt') return 'Pazartesi';
+      if (f.startsWith('sali') || f === 'sal') return 'Salı';
+      if (f.startsWith('carsamba') || f === 'car' || f === 'crs') return 'Çarşamba';
+      if (f.startsWith('persembe') || f === 'per' || f === 'prs') return 'Perşembe';
+      if (f.startsWith('cuma') || f === 'cum') return 'Cuma';
+      return null;
+    }
+
+    function normalizeHourValue(raw) {
+      if (raw == null) return null;
+      const s = String(raw).trim();
+      const numMatch = s.match(/(\d+)/);
+      if (numMatch) {
+        const n = parseInt(numMatch[1], 10);
+        if (n >= 1 && n <= 7) return n;
+      }
+      const timeMatch = s.match(/(\d{1,2})[:.](\d{2})/);
+      if (timeMatch) {
+        const target = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+        for (const slots of [timeTableSlots.normal, timeTableSlots.cuma]) {
+          for (let h = 1; h <= 7; h++) {
+            if (slots[h] && slots[h].start === target) return h;
+          }
+        }
+      }
+      return null;
+    }
+
+    function normalizeClassNameFlexible(raw) {
+      const s = String(raw == null ? '' : raw).trim();
+      if (!s) return '';
+      const compact = s.toUpperCase().replace(/[\s\-_./]/g, '');
+      const known = KNOWN_CLASSES.find(k => k.toUpperCase().replace(/[\s\-_./]/g, '') === compact);
+      return known || s;
+    }
+
+    function sanitizeCode(raw) {
+      return String(raw == null ? '' : raw).trim().replace(/\s+/g, '').toUpperCase();
+    }
+
+    function mergeTimetableInto(target, addition) {
+      Object.keys(addition).forEach(teacher => {
+        if (!target[teacher]) target[teacher] = { "Pazartesi": {}, "Salı": {}, "Çarşamba": {}, "Perşembe": {}, "Cuma": {} };
+        SCHEDULE_DAY_NAMES.forEach(day => {
+          Object.assign(target[teacher][day], addition[teacher][day]);
+        });
+      });
+    }
+
+    // Sütun sırası ne olursa olsun; başlıklardan Öğretmen/Sınıf/Gün/Saat/Ders sütunlarını bulup satırları işler
+    function buildFromFlatRows(dataRows, columnMap) {
+      const partialTimetable = {};
+      const newLessonNames = {};
+      const unmatchedTeachers = [];
+      let matchedCount = 0;
+
+      dataRows.forEach(row => {
+        if (!row) return;
+        const teacherRaw = columnMap.teacher != null ? row[columnMap.teacher] : null;
+        const classRaw = columnMap.class != null ? row[columnMap.class] : null;
+        const dayRaw = columnMap.day != null ? row[columnMap.day] : null;
+        const hourRaw = columnMap.hour != null ? row[columnMap.hour] : null;
+        const codeRaw = columnMap.lessonCode != null ? row[columnMap.lessonCode] : null;
+        const nameRaw = columnMap.lessonName != null ? row[columnMap.lessonName] : null;
+
+        if (teacherRaw == null || classRaw == null || dayRaw == null || hourRaw == null) return;
+        if ((codeRaw == null || !String(codeRaw).trim()) && (nameRaw == null || !String(nameRaw).trim())) return;
+
+        const day = normalizeDayName(dayRaw);
+        const hour = normalizeHourValue(hourRaw);
+        if (!day || !hour) return;
+
+        const teacherRawTrim = String(teacherRaw).trim();
+        if (!teacherRawTrim) return;
+        const teacherName = resolveTeacherName(teacherRawTrim);
+        if (!KNOWN_TEACHERS.some(k => turkishUpper(k) === turkishUpper(teacherRawTrim)) && !unmatchedTeachers.includes(teacherRawTrim)) {
+          unmatchedTeachers.push(teacherRawTrim);
+        }
+
+        const cls = normalizeClassNameFlexible(classRaw);
+
+        let code;
+        if (codeRaw != null && String(codeRaw).trim()) {
+          code = sanitizeCode(codeRaw);
+          if (nameRaw != null && String(nameRaw).trim()) newLessonNames[code] = turkishTitleCase(String(nameRaw).trim());
+        } else {
+          const fullName = String(nameRaw).trim();
+          code = sanitizeCode(fullName);
+          newLessonNames[code] = turkishTitleCase(fullName);
+        }
+        if (!code) return;
+
+        if (!partialTimetable[teacherName]) {
+          partialTimetable[teacherName] = { "Pazartesi": {}, "Salı": {}, "Çarşamba": {}, "Perşembe": {}, "Cuma": {} };
+        }
+        partialTimetable[teacherName][day][hour] = `${cls} ${code}`;
+        matchedCount++;
+      });
+
+      return { partialTimetable, newLessonNames, unmatchedTeachers, matchedCount };
+    }
+
+    function autoDetectFlatColumns(headerRow) {
+      const map = {};
+      (headerRow || []).forEach((cell, idx) => {
+        const field = matchFieldFromHeader(cell);
+        if (field && map[field] == null) map[field] = idx;
+      });
+      const hasRequired = map.teacher != null && map.class != null && map.day != null && map.hour != null
+        && (map.lessonCode != null || map.lessonName != null);
+      return hasRequired ? map : null;
+    }
+
+    // Format B: her sayfada başlık satırını arar (ilk 15 satır içinde), bulursa sütun sırasından bağımsız olarak işler
+    function tryParseFlatFormat(wb) {
+      let combinedTimetable = {};
+      let combinedLessonNames = {};
+      let combinedUnmatched = [];
+      let totalMatched = 0;
+      let anyHeaderFound = false;
+
+      wb.SheetNames.forEach(sheetName => {
+        const sheet = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+        const scanLimit = Math.min(rows.length, 15);
+        let headerIdx = -1, columnMap = null;
+        for (let i = 0; i < scanLimit; i++) {
+          const candidate = autoDetectFlatColumns(rows[i]);
+          if (candidate) { headerIdx = i; columnMap = candidate; break; }
+        }
+        if (headerIdx === -1) return;
+        anyHeaderFound = true;
+        const dataRows = rows.slice(headerIdx + 1);
+        const { partialTimetable, newLessonNames, unmatchedTeachers, matchedCount } = buildFromFlatRows(dataRows, columnMap);
+        mergeTimetableInto(combinedTimetable, partialTimetable);
+        Object.assign(combinedLessonNames, newLessonNames);
+        unmatchedTeachers.forEach(t => { if (!combinedUnmatched.includes(t)) combinedUnmatched.push(t); });
+        totalMatched += matchedCount;
+      });
+
+      if (!anyHeaderFound || totalMatched === 0) return null;
+      return { partialTimetable: combinedTimetable, newLessonNames: combinedLessonNames, unmatchedTeachers: combinedUnmatched };
+    }
+
+    // Ortak sonuç uygulayıcı: hem otomatik algılama hem manuel eşleştirme buradan geçer
+    function applyScheduleParseResult(result, resDiv) {
+      const { partialTimetable, newLessonNames, unmatchedTeachers } = result;
+      const teacherCount = Object.keys(partialTimetable).length;
+
+      if (teacherCount === 0) {
+        resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosyada tanınabilir bir ders programı satırı bulunamadı. Eşleştirmeleri kontrol edip tekrar deneyin.</div>`;
+        return;
+      }
+
+      const mergedTimetable = Object.assign({}, timetable, partialTimetable);
+      const mergedLessonNames = Object.assign({}, lessonNames, newLessonNames);
+
+      Promise.all([
+        db.collection('config').doc('timetable').set({ timetable: mergedTimetable }),
+        db.collection('config').doc('lessonNames').set({ lessonNames: mergedLessonNames })
+      ]).then(() => {
+        timetable = mergedTimetable;
+        lessonNames = mergedLessonNames;
+        syncTeacherDropdowns();
+        let msg = `✅ ${teacherCount} öğretmenin ders programı güncellendi ve tüm kullanıcılara aktarıldı.`;
+        if (unmatchedTeachers.length) {
+          msg += `<br><span style="font-size:0.75rem;">⚠️ Bilinen öğretmen listesiyle otomatik eşleşmeyen isim(ler): ${unmatchedTeachers.join(', ')} — yazımı kontrol edin, program yine de kaydedildi.</span>`;
+        }
+        resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">${msg}</div>`;
+        renderClassSchedule();
+      }).catch(err => {
+        resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Firebase'e kaydedilemedi: ${err.message}</div>`;
+      });
+    }
+
+    // --- MANUEL SÜTUN EŞLEŞTİRME (otomatik algılama başarısız olduğunda son çare) ---
+    let pendingManualMapping = null;
+
+    const SCHEDULE_FIELD_OPTIONS = [
+      { key: '', label: '— Yoksay —' },
+      { key: 'teacher', label: 'Öğretmen' },
+      { key: 'class', label: 'Sınıf' },
+      { key: 'day', label: 'Gün' },
+      { key: 'hour', label: 'Ders Saati' },
+      { key: 'lessonCode', label: 'Ders Kodu' },
+      { key: 'lessonName', label: 'Ders Adı' }
+    ];
+
+    function showManualMappingUI(wb, resDiv) {
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+
+      // En çok dolu hücreye sahip satırı başlık adayı olarak seç
+      let headerIdx = 0, bestFill = -1;
+      const scanLimit = Math.min(rows.length, 10);
+      for (let i = 0; i < scanLimit; i++) {
+        const fill = (rows[i] || []).filter(c => c != null && String(c).trim() !== '').length;
+        if (fill > bestFill) { bestFill = fill; headerIdx = i; }
+      }
+      const headerRow = rows[headerIdx] || [];
+      const previewRows = rows.slice(headerIdx + 1, headerIdx + 4);
+      const colCount = Math.max(headerRow.length, previewRows.reduce((m, r) => Math.max(m, (r || []).length), 0), 1);
+
+      pendingManualMapping = { wb, headerIdx };
+
+      let html = `<div class="result-box warning-box">
+        <h4>⚠️ Dosya formatı otomatik tanınamadı</h4>
+        <p style="margin-top:6px;">Sorun değil — hangi sütunun ne anlama geldiğini bir kez belirt, sistem devamını halleder.</p>
+      </div>
+      <div class="table-responsive" style="margin-top:10px;">
+        <table class="modern-table"><thead><tr>`;
+
+      for (let c = 0; c < colCount; c++) {
+        const guess = matchFieldFromHeader(headerRow[c]) || '';
+        html += `<th style="padding:6px; vertical-align:top;">
+          <div style="font-size:0.68rem; color:#dbeafe; margin-bottom:4px; font-weight:600;">${headerRow[c] != null && String(headerRow[c]).trim() !== '' ? String(headerRow[c]) : `Sütun ${c + 1}`}</div>
+          <select id="map-col-${c}" style="width:100%; padding:4px; font-size:0.72rem; border-radius:6px; border:1px solid #cbd5e1;">
+            ${SCHEDULE_FIELD_OPTIONS.map(o => `<option value="${o.key}" ${o.key === guess ? 'selected' : ''}>${o.label}</option>`).join('')}
+          </select>
+        </th>`;
+      }
+      html += `</tr></thead><tbody>`;
+
+      previewRows.forEach(r => {
+        html += `<tr>` + Array.from({ length: colCount }, (_, c) => `<td style="font-size:0.75rem;">${(r || [])[c] != null ? String((r || [])[c]) : ''}</td>`).join('') + `</tr>`;
+      });
+
+      html += `</tbody></table></div>
+      <button class="btn-submit" style="margin-top:12px;" onclick="confirmManualScheduleMapping(${colCount})">Bu Eşleştirmeyle Devam Et</button>`;
+
+      resDiv.innerHTML = html;
+    }
+
+    function confirmManualScheduleMapping(colCount) {
+      if (!pendingManualMapping) return;
+      const { wb, headerIdx } = pendingManualMapping;
+      const resDiv = document.getElementById('schedule-upload-result');
+
+      const columnMap = {};
+      for (let c = 0; c < colCount; c++) {
+        const sel = document.getElementById(`map-col-${c}`);
+        const key = sel ? sel.value : '';
+        if (key) columnMap[key] = c;
+      }
+
+      if (columnMap.teacher == null || columnMap.class == null || columnMap.day == null || columnMap.hour == null
+        || (columnMap.lessonCode == null && columnMap.lessonName == null)) {
+        alert('Lütfen en az Öğretmen, Sınıf, Gün, Ders Saati ve (Ders Kodu veya Ders Adı) sütunlarını eşleştirin.');
+        return;
+      }
+
+      let combinedTimetable = {};
+      let combinedLessonNames = {};
+      let combinedUnmatched = [];
+
+      wb.SheetNames.forEach(sheetName => {
+        const sheet = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+        const dataRows = rows.slice(headerIdx + 1);
+        const { partialTimetable, newLessonNames, unmatchedTeachers } = buildFromFlatRows(dataRows, columnMap);
+        mergeTimetableInto(combinedTimetable, partialTimetable);
+        Object.assign(combinedLessonNames, newLessonNames);
+        unmatchedTeachers.forEach(t => { if (!combinedUnmatched.includes(t)) combinedUnmatched.push(t); });
+      });
+
+      pendingManualMapping = null;
+      applyScheduleParseResult({ partialTimetable: combinedTimetable, newLessonNames: combinedLessonNames, unmatchedTeachers: combinedUnmatched }, resDiv);
+    }
+
     function handleScheduleExcelUpload(event) {
       const file = event.target.files[0];
       const resDiv = document.getElementById('schedule-upload-result');
@@ -1462,33 +1775,23 @@
         try {
           const data = new Uint8Array(e.target.result);
           const wb = XLSX.read(data, { type: 'array' });
-          const { partialTimetable, newLessonNames, unmatchedTeachers } = parseScheduleWorkbook(wb);
-          const teacherCount = Object.keys(partialTimetable).length;
 
-          if (teacherCount === 0) {
-            resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosyada tanınabilir bir öğretmen ders programı bulunamadı. Dosyanın "Dağıtmatik" öğretmen programı çıktısı formatında olduğundan emin olun.</div>`;
+          // 1) Bilinen "Dağıtmatik" pivot formatı
+          const resultA = parseScheduleWorkbook(wb);
+          if (Object.keys(resultA.partialTimetable).length > 0) {
+            applyScheduleParseResult(resultA, resDiv);
             return;
           }
 
-          const mergedTimetable = Object.assign({}, timetable, partialTimetable);
-          const mergedLessonNames = Object.assign({}, lessonNames, newLessonNames);
+          // 2) Esnek düz liste formatı: sütun sırası fark etmeksizin başlık kelimeleriyle algılama
+          const resultB = tryParseFlatFormat(wb);
+          if (resultB) {
+            applyScheduleParseResult(resultB, resDiv);
+            return;
+          }
 
-          Promise.all([
-            db.collection('config').doc('timetable').set({ timetable: mergedTimetable }),
-            db.collection('config').doc('lessonNames').set({ lessonNames: mergedLessonNames })
-          ]).then(() => {
-            timetable = mergedTimetable;
-            lessonNames = mergedLessonNames;
-            syncTeacherDropdowns();
-            let msg = `✅ ${teacherCount} öğretmenin ders programı güncellendi ve tüm kullanıcılara aktarıldı.`;
-            if (unmatchedTeachers.length) {
-              msg += `<br><span style="font-size:0.75rem;">⚠️ Bilinen öğretmen listesiyle otomatik eşleşmeyen isim(ler): ${unmatchedTeachers.join(', ')} — yazımı kontrol edin, program yine de kaydedildi.</span>`;
-            }
-            resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">${msg}</div>`;
-            renderClassSchedule();
-          }).catch(err => {
-            resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Firebase'e kaydedilemedi: ${err.message}</div>`;
-          });
+          // 3) Otomatik algılama başarısız oldu: manuel sütun eşleştirme ekranı göster
+          showManualMappingUI(wb, resDiv);
         } catch (err) {
           resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosya okunamadı: ${err.message}</div>`;
         }
@@ -1497,6 +1800,26 @@
     }
 
     // --- EXCEL YÜKLEME: NÖBET ÇİZELGESİ ---
+    function matchDutyField(headerText) {
+      const f = asciiFold(headerText);
+      if (!f) return null;
+      if (f.includes('tarih') || f === 'gun' || f.includes('gunu')) return 'date';
+      if (f.includes('bahce')) return 'bahce';
+      if (f.includes('bina')) return 'bina';
+      return null;
+    }
+
+    function normalizeDutyDateValue(raw) {
+      if (raw instanceof Date) return toISODateLocal(raw);
+      const s = String(raw == null ? '' : raw).trim();
+      if (!s) return null;
+      let m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
+      if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+      m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/);
+      if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+      return null;
+    }
+
     function handleDutyExcelUpload(event) {
       const file = event.target.files[0];
       const resDiv = document.getElementById('duty-upload-result');
@@ -1508,25 +1831,34 @@
           const data = new Uint8Array(e.target.result);
           const wb = XLSX.read(data, { type: 'array', cellDates: true });
           const sheet = wb.Sheets[wb.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, cellDates: true });
+
+          // Başlık satırını sütun sırasından bağımsız olarak bul (Tarih / Bahçe Nöbetçisi / Bina Nöbetçisi)
+          let headerIdx = -1, colMap = null;
+          const scanLimit = Math.min(rows.length, 10);
+          for (let i = 0; i < scanLimit; i++) {
+            const map = {};
+            (rows[i] || []).forEach((cell, idx) => {
+              const field = matchDutyField(cell);
+              if (field && map[field] == null) map[field] = idx;
+            });
+            if (map.date != null && map.bahce != null && map.bina != null) { headerIdx = i; colMap = map; break; }
+          }
 
           const newDuty = {};
-          rows.forEach(row => {
-            let dateVal = row['Tarih'];
-            if (dateVal instanceof Date) {
-              const y = dateVal.getFullYear(), m = String(dateVal.getMonth() + 1).padStart(2, '0'), d = String(dateVal.getDate()).padStart(2, '0');
-              dateVal = `${y}-${m}-${d}`;
-            } else {
-              dateVal = String(dateVal).trim();
-            }
-            const bahce = String(row['Bahçe Nöbetçisi'] ?? row['Bahce Nobetcisi'] ?? '').trim();
-            const bina = String(row['Bina Nöbetçisi'] ?? row['Bina Nobetcisi'] ?? '').trim();
-            if (!dateVal || !bahce || !bina) return;
-            newDuty[dateVal] = { bahce, bina };
-          });
+          if (headerIdx !== -1) {
+            rows.slice(headerIdx + 1).forEach(row => {
+              if (!row) return;
+              const dateVal = normalizeDutyDateValue(row[colMap.date]);
+              const bahce = String(row[colMap.bahce] ?? '').trim();
+              const bina = String(row[colMap.bina] ?? '').trim();
+              if (!dateVal || !bahce || !bina) return;
+              newDuty[dateVal] = { bahce, bina };
+            });
+          }
 
           if (Object.keys(newDuty).length === 0) {
-            resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosyada beklenen sütunlar bulunamadı (Tarih, Bahçe Nöbetçisi, Bina Nöbetçisi). Lütfen dosya formatını kontrol edin.</div>`;
+            resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosyada beklenen sütunlar bulunamadı (Tarih, Bahçe Nöbetçisi, Bina Nöbetçisi — sütun sırası fark etmez). Lütfen dosya formatını kontrol edin.</div>`;
             return;
           }
 
@@ -1572,6 +1904,17 @@
       }
     }
 
+    // Tarih girdisini ("YYYY-MM-DD") saat dilimi kaymasına yol açmadan yerel tarihe çevirir
+    function parseLocalDate(str) {
+      const [y, m, d] = str.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function toISODateLocal(d) {
+      const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
     // OTOMATİK ADİL NÖBET DAĞITICI (GENERATOR)
     function generateNewDutySchedule() {
       const sDateStr = document.getElementById('gen-start-date').value;
@@ -1596,8 +1939,8 @@
       let counts = {};
       availableTeachers.forEach(t => counts[t.name] = { bahce: 0, bina: 0, total: 0 });
 
-      let curr = new Date(sDateStr);
-      const end = new Date(eDateStr);
+      let curr = parseLocalDate(sDateStr);
+      const end = parseLocalDate(eDateStr);
       let csvContent = "data:text/csv;charset=utf-8,Tarih,Gun,Bahce Nobetcisi,Bina Nobetcisi\n";
       let daysCount = 0;
 
@@ -1605,7 +1948,7 @@
         const dayIdx = curr.getDay();
         if (dayIdx >= 1 && dayIdx <= 5) { // Pazartesi - Cuma
           const dayName = dayNamesTr[dayIdx];
-          const dateISO = curr.toISOString().split("T")[0];
+          const dateISO = toISODateLocal(curr);
 
           // Bu gün uygun öğretmenler
           const eligible = availableTeachers.filter(t => !t.off.includes(dayName));
@@ -1646,6 +1989,17 @@
     // --- 5. TAŞIMALI VE NÖBET NOTLARI (FIREBASE İLE TÜM KULLANICILARDA PAYLAŞIMLI) ---
     document.getElementById('note-date').valueAsDate = new Date();
 
+    // Giriş sistemi kurulana kadar geçici çözüm: her tarayıcıya özel anonim bir kimlik.
+    // Not silme yetkisini bu kimliğe göre sınırlandırıyoruz; ileride gerçek kullanıcı id'siyle değiştirilecek.
+    function getDeviceId() {
+      let id = localStorage.getItem('personelDeviceId');
+      if (!id) {
+        id = (crypto.randomUUID ? crypto.randomUUID() : `dev-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        localStorage.setItem('personelDeviceId', id);
+      }
+      return id;
+    }
+
     function saveDutyNote() {
       const d = document.getElementById('note-date').value;
       const s = document.getElementById('note-service').value.trim();
@@ -1658,6 +2012,7 @@
 
       db.collection('notes').add({
         date: d, service: s, note: t,
+        creatorId: getDeviceId(),
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       }).then(() => {
         document.getElementById('note-service').value = "";
@@ -1668,6 +2023,11 @@
     }
 
     function deleteNote(id) {
+      const note = notesCache.find(n => n.id === id);
+      if (!note || note.creatorId !== getDeviceId()) {
+        alert('Bu notu yalnızca ekleyen kişi silebilir.');
+        return;
+      }
       if (!confirm('Bu notu silmek istediğinize emin misiniz?')) return;
       db.collection('notes').doc(id).delete().catch(err => {
         alert('Silinemedi: ' + err.message);
@@ -1677,6 +2037,7 @@
     function renderNotesList() {
       const div = document.getElementById('saved-notes-list');
       const notes = notesCache;
+      const myId = getDeviceId();
 
       if (notes.length === 0) {
         div.innerHTML = `<p style="font-size:0.8rem; color:#64748b;">Henüz kayıtlı not bulunmuyor.</p>`;
@@ -1685,12 +2046,13 @@
 
       let html = `<h4 style="font-size:0.95rem; color:var(--primary); margin-bottom:8px;">Kayıtlı Notlar</h4>`;
       notes.forEach(n => {
+        const canDelete = n.creatorId === myId;
         html += `
           <div class="duty-card" style="position:relative;">
             <div style="font-size:0.75rem; color:var(--muted); font-weight:700;">📅 ${n.date}</div>
             ${n.service ? `<div style="font-size:0.85rem; margin-top:4px;"><strong>🚌 Servis:</strong> ${n.service}</div>` : ''}
             ${n.note ? `<div style="font-size:0.85rem; margin-top:4px;"><strong>📝 Olay/Not:</strong> ${n.note}</div>` : ''}
-            <button onclick="deleteNote('${n.id}')" style="position:absolute; right:10px; top:10px; background:none; border:none; color:var(--danger); font-size:0.8rem; cursor:pointer; font-weight:700;">Sil</button>
+            ${canDelete ? `<button onclick="deleteNote('${n.id}')" style="position:absolute; right:10px; top:10px; background:none; border:none; color:var(--danger); font-size:0.8rem; cursor:pointer; font-weight:700;">Sil</button>` : ''}
           </div>`;
       });
       div.innerHTML = html;
