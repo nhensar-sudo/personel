@@ -209,6 +209,11 @@
       background: #1d4ed8;
     }
 
+    .btn-submit:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
     .btn-action {
       background: var(--secondary);
       color: white;
@@ -1384,10 +1389,27 @@
       }).join(' ');
     }
 
+    // Gerçek okul belgelerinde hâlâ kullanılan eski/alternatif isimler (uygulamadaki resmi isimle eşlenir)
+    const TEACHER_ALIASES = { "Turan Hoca": "Turan Avuç" };
+
     function resolveTeacherName(raw) {
       const target = turkishUpper(raw);
+      const aliasKey = Object.keys(TEACHER_ALIASES).find(a => turkishUpper(a) === target);
+      if (aliasKey) return TEACHER_ALIASES[aliasKey];
       const match = KNOWN_TEACHERS.find(k => turkishUpper(k) === target);
       return match || raw.trim();
+    }
+
+    // Excel'de sadece ad yazılmışsa (soyadsız, örn. "Esma"), tek bir bilinen öğretmenle
+    // eşleşiyorsa tam adını kullanır; belirsizse veya eşleşme yoksa olduğu gibi bırakır.
+    function resolveTeacherNameLoose(raw) {
+      const trimmed = String(raw == null ? '' : raw).trim();
+      if (!trimmed) return trimmed;
+      const resolved = resolveTeacherName(trimmed);
+      if (KNOWN_TEACHERS.some(k => turkishUpper(k) === turkishUpper(resolved))) return resolved;
+      const firstNameMatches = KNOWN_TEACHERS.filter(k => turkishUpper(k.split(' ')[0]) === turkishUpper(trimmed));
+      if (firstNameMatches.length === 1) return firstNameMatches[0];
+      return trimmed;
     }
 
     function syncTeacherDropdowns() {
@@ -1416,10 +1438,17 @@
         const sheet = wb.Sheets[sheetName];
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
 
+        // Gerçek Dağıtmatik çıktısında "Öğretmen  : Ad Soyad" TEK hücrede birleşik gelir;
+        // eski/olası ayrık biçim (A: "Öğretmen", B: ": Ad Soyad") için de geriye dönük destek var.
         let teacherRaw = null;
         rows.forEach(row => {
+          if (teacherRaw) return;
           const a = row[0] != null ? String(row[0]).trim() : '';
-          if (a === 'Öğretmen' && row[1]) {
+          if (!a || !asciiFold(a).startsWith('ogretmen')) return;
+          const colonIdx = a.indexOf(':');
+          if (colonIdx >= 0 && a.slice(colonIdx + 1).trim()) {
+            teacherRaw = a.slice(colonIdx + 1).trim();
+          } else if (row[1] != null && String(row[1]).trim()) {
             teacherRaw = String(row[1]).replace(/^:\s*/, '').trim();
           }
         });
@@ -1699,11 +1728,16 @@
       const previewRows = rows.slice(headerIdx + 1, headerIdx + 4);
       const colCount = Math.max(headerRow.length, previewRows.reduce((m, r) => Math.max(m, (r || []).length), 0), 1);
 
-      pendingManualMapping = { wb, headerIdx };
+      pendingManualMapping = { wb, headerIdx, colCount };
 
       let html = `<div class="result-box warning-box">
-        <h4>⚠️ Dosya formatı otomatik tanınamadı</h4>
-        <p style="margin-top:6px;">Sorun değil — hangi sütunun ne anlama geldiğini bir kez belirt, sistem devamını halleder.</p>
+        <h4>⚠️ Bu dosyanın düzeni otomatik tanınamadı</h4>
+        <p style="margin-top:6px; line-height:1.5;">
+          Aşağıda dosyandaki sütunlar listelendi. Her sütunun altındaki kutudan
+          <strong>o sütunda ne olduğunu</strong> seç (Öğretmen, Sınıf, Gün, Ders Saati, Ders Kodu/Adı).
+          İlgisi olmayan sütunları <strong>"— Yoksay —"</strong> olarak bırak.
+        </p>
+        <p style="margin-top:6px; font-size:0.78rem;">Yanlış dosya seçtiysen, yukarıdaki kutudan tekrar dosya seçebilirsin — bu ekran otomatik güncellenir.</p>
       </div>
       <div class="table-responsive" style="margin-top:10px;">
         <table class="modern-table"><thead><tr>`;
@@ -1712,7 +1746,7 @@
         const guess = matchFieldFromHeader(headerRow[c]) || '';
         html += `<th style="padding:6px; vertical-align:top;">
           <div style="font-size:0.68rem; color:#dbeafe; margin-bottom:4px; font-weight:600;">${headerRow[c] != null && String(headerRow[c]).trim() !== '' ? String(headerRow[c]) : `Sütun ${c + 1}`}</div>
-          <select id="map-col-${c}" style="width:100%; padding:4px; font-size:0.72rem; border-radius:6px; border:1px solid #cbd5e1;">
+          <select id="map-col-${c}" onchange="updateManualMappingStatus()" style="width:100%; padding:4px; font-size:0.72rem; border-radius:6px; border:1px solid #cbd5e1;">
             ${SCHEDULE_FIELD_OPTIONS.map(o => `<option value="${o.key}" ${o.key === guess ? 'selected' : ''}>${o.label}</option>`).join('')}
           </select>
         </th>`;
@@ -1724,14 +1758,48 @@
       });
 
       html += `</tbody></table></div>
-      <button class="btn-submit" style="margin-top:12px;" onclick="confirmManualScheduleMapping(${colCount})">Bu Eşleştirmeyle Devam Et</button>`;
+      <p id="mapping-status" style="margin-top:10px; font-size:0.82rem; font-weight:700;"></p>
+      <button id="mapping-confirm-btn" class="btn-submit" onclick="confirmManualScheduleMapping()">Bu Eşleştirmeyle Devam Et</button>`;
 
       resDiv.innerHTML = html;
+      updateManualMappingStatus();
     }
 
-    function confirmManualScheduleMapping(colCount) {
+    function updateManualMappingStatus() {
       if (!pendingManualMapping) return;
-      const { wb, headerIdx } = pendingManualMapping;
+      const { colCount } = pendingManualMapping;
+      let teacher = false, cls = false, day = false, hour = false, lesson = false;
+      for (let c = 0; c < colCount; c++) {
+        const sel = document.getElementById(`map-col-${c}`);
+        if (!sel) continue;
+        if (sel.value === 'teacher') teacher = true;
+        if (sel.value === 'class') cls = true;
+        if (sel.value === 'day') day = true;
+        if (sel.value === 'hour') hour = true;
+        if (sel.value === 'lessonCode' || sel.value === 'lessonName') lesson = true;
+      }
+      const doneCount = [teacher, cls, day, hour, lesson].filter(Boolean).length;
+      const missing = [];
+      if (!teacher) missing.push('Öğretmen');
+      if (!cls) missing.push('Sınıf');
+      if (!day) missing.push('Gün');
+      if (!hour) missing.push('Ders Saati');
+      if (!lesson) missing.push('Ders Kodu veya Ders Adı');
+
+      const statusEl = document.getElementById('mapping-status');
+      const btn = document.getElementById('mapping-confirm-btn');
+      if (statusEl) {
+        statusEl.textContent = doneCount === 5
+          ? '✅ Tüm zorunlu alanlar seçildi, devam edebilirsin.'
+          : `⚠️ Eksik: ${missing.join(', ')}`;
+        statusEl.style.color = doneCount === 5 ? 'var(--success)' : 'var(--danger)';
+      }
+      if (btn) btn.disabled = doneCount < 5;
+    }
+
+    function confirmManualScheduleMapping() {
+      if (!pendingManualMapping) return;
+      const { wb, headerIdx, colCount } = pendingManualMapping;
       const resDiv = document.getElementById('schedule-upload-result');
 
       const columnMap = {};
@@ -1743,7 +1811,7 @@
 
       if (columnMap.teacher == null || columnMap.class == null || columnMap.day == null || columnMap.hour == null
         || (columnMap.lessonCode == null && columnMap.lessonName == null)) {
-        alert('Lütfen en az Öğretmen, Sınıf, Gün, Ders Saati ve (Ders Kodu veya Ders Adı) sütunlarını eşleştirin.');
+        updateManualMappingStatus();
         return;
       }
 
@@ -1806,6 +1874,8 @@
       if (f.includes('tarih') || f === 'gun' || f.includes('gunu')) return 'date';
       if (f.includes('bahce')) return 'bahce';
       if (f.includes('bina')) return 'bina';
+      if (/^1(nobetci|gorevli)/.test(f)) return 'gorevli1';
+      if (/^2(nobetci|gorevli)/.test(f)) return 'gorevli2';
       return null;
     }
 
@@ -1820,6 +1890,42 @@
       return null;
     }
 
+    // "NÖBET YOK", "Tatil" gibi görevli yerine geçen ifadeleri gerçek isim olarak kaydetmemek için
+    function isNoDutyPlaceholder(raw) {
+      const f = asciiFold(raw);
+      return !f || f.includes('nobetyok') || f === 'yok' || f.includes('tatil') || f.includes('okulyok');
+    }
+
+    // Bir sayfadaki (header dahil ham satırlar) nöbet verisini işler; bulunan gün sayısını döner
+    function extractDutyFromRows(rows, into) {
+      const scanLimit = Math.min(rows.length, 10);
+      let headerIdx = -1, colMap = null;
+      for (let i = 0; i < scanLimit; i++) {
+        const map = {};
+        (rows[i] || []).forEach((cell, idx) => {
+          const field = matchDutyField(cell);
+          if (field && map[field] == null) map[field] = idx;
+        });
+        const hasPair = (map.bahce != null && map.bina != null) || (map.gorevli1 != null && map.gorevli2 != null);
+        if (map.date != null && hasPair) { headerIdx = i; colMap = map; break; }
+      }
+      if (headerIdx === -1) return 0;
+
+      const col1 = colMap.bahce != null ? colMap.bahce : colMap.gorevli1;
+      const col2 = colMap.bina != null ? colMap.bina : colMap.gorevli2;
+      let count = 0;
+      rows.slice(headerIdx + 1).forEach(row => {
+        if (!row) return;
+        const dateVal = normalizeDutyDateValue(row[colMap.date]);
+        const rawBahce = row[col1] ?? '';
+        const rawBina = row[col2] ?? '';
+        if (!dateVal || isNoDutyPlaceholder(rawBahce) || isNoDutyPlaceholder(rawBina)) return;
+        into[dateVal] = { bahce: resolveTeacherNameLoose(rawBahce), bina: resolveTeacherNameLoose(rawBina) };
+        count++;
+      });
+      return count;
+    }
+
     function handleDutyExcelUpload(event) {
       const file = event.target.files[0];
       const resDiv = document.getElementById('duty-upload-result');
@@ -1830,42 +1936,27 @@
         try {
           const data = new Uint8Array(e.target.result);
           const wb = XLSX.read(data, { type: 'array', cellDates: true });
-          const sheet = wb.Sheets[wb.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, cellDates: true });
 
-          // Başlık satırını sütun sırasından bağımsız olarak bul (Tarih / Bahçe Nöbetçisi / Bina Nöbetçisi)
-          let headerIdx = -1, colMap = null;
-          const scanLimit = Math.min(rows.length, 10);
-          for (let i = 0; i < scanLimit; i++) {
-            const map = {};
-            (rows[i] || []).forEach((cell, idx) => {
-              const field = matchDutyField(cell);
-              if (field && map[field] == null) map[field] = idx;
-            });
-            if (map.date != null && map.bahce != null && map.bina != null) { headerIdx = i; colMap = map; break; }
-          }
-
+          // Tüm sayfalar taranır (resmi çizelgelerde her ay ayrı sayfada olabilir);
+          // nöbet verisi içermeyen sayfalar (Esaslar, Görev Özeti vb.) otomatik atlanır.
           const newDuty = {};
-          if (headerIdx !== -1) {
-            rows.slice(headerIdx + 1).forEach(row => {
-              if (!row) return;
-              const dateVal = normalizeDutyDateValue(row[colMap.date]);
-              const bahce = String(row[colMap.bahce] ?? '').trim();
-              const bina = String(row[colMap.bina] ?? '').trim();
-              if (!dateVal || !bahce || !bina) return;
-              newDuty[dateVal] = { bahce, bina };
-            });
-          }
+          const usedSheets = [];
+          wb.SheetNames.forEach(sheetName => {
+            const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: null, cellDates: true });
+            const count = extractDutyFromRows(rows, newDuty);
+            if (count > 0) usedSheets.push(`${sheetName} (${count})`);
+          });
 
           if (Object.keys(newDuty).length === 0) {
-            resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosyada beklenen sütunlar bulunamadı (Tarih, Bahçe Nöbetçisi, Bina Nöbetçisi — sütun sırası fark etmez). Lütfen dosya formatını kontrol edin.</div>`;
+            resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Hiçbir sayfada tanınabilir nöbet verisi bulunamadı. Beklenen sütunlar: Tarih + (Bahçe/Bina Nöbetçisi veya 1./2. Nöbetçi). Taranan sayfalar: ${wb.SheetNames.join(', ')}.</div>`;
             return;
           }
 
           dutyDatabase = newDuty;
           db.collection('config').doc('duty').set({ dutyDatabase: newDuty })
             .then(() => {
-              resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">✅ Nöbet çizelgesi güncellendi ve tüm kullanıcılara aktarıldı.</div>`;
+              const toplam = Object.keys(newDuty).length;
+              resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">✅ ${toplam} günlük nöbet kaydı güncellendi ve tüm kullanıcılara aktarıldı.<br><span style="font-size:0.75rem;">Kullanılan sayfalar: ${usedSheets.join(', ')}</span></div>`;
             })
             .catch(err => {
               resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Firebase'e kaydedilemedi: ${err.message}</div>`;
@@ -1910,8 +2001,12 @@
       return new Date(y, m - 1, d);
     }
 
+    // Excel/SheetJS'ten gelen tarihlerde birkaç saniyelik kayan nokta sapması görülebilir
+    // (ör. tam gece yarısı yerine 23:59:04 gibi) — bu yüzden ham saat/dakika/saniyeye
+    // güvenmek yerine en yakın tam güne (UTC gün sınırına) yuvarlayıp öyle okuyoruz.
     function toISODateLocal(d) {
-      const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+      const rounded = new Date(Math.round(d.getTime() / 86400000) * 86400000);
+      const y = rounded.getUTCFullYear(), m = String(rounded.getUTCMonth() + 1).padStart(2, '0'), day = String(rounded.getUTCDate()).padStart(2, '0');
       return `${y}-${m}-${day}`;
     }
 
