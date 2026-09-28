@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Supabase Bağlantı Testi</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body style="font-family: monospace; padding: 20px; white-space: pre-wrap;">
+  <div id="result">Bağlanıyor...</div>
+  <script>
+    const supabaseUrl = 'https://mqrfecyvvptjmdeopfsv.supabase.co';
+    const supabaseKey = 'sb_publishable_NkbDMnh_Iuxwh3pnwI_Fpw_SAmHuyeH';
+    const client = supabase.createClient(supabaseUrl, supabaseKey);
+
+    client.from('kurumlar').select('*').then(({ data, error }) => {
+      document.getElementById('result').textContent = JSON.stringify({ data, error }, null, 2);
+    });
+  </script>
+</body>
+</html>
