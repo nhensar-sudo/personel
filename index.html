@@ -1679,7 +1679,10 @@
         return;
       }
 
-      const mergedTimetable = Object.assign({}, timetable, partialTimetable);
+      // Tam değiştirme (merge değil): yüklenen dosya o dönemin güncel/otoriter programı kabul edilir.
+      // Eskiden kalma, yeni dosyada artık geçmeyen öğretmen kayıtları (silinmiş/yanlış sayfa vb.)
+      // burada temizlenmiş olur — merge mantığı bunları sonsuza kadar biriktiriyordu.
+      const mergedTimetable = partialTimetable;
       const mergedLessonNames = Object.assign({}, lessonNames, newLessonNames);
 
       Promise.all([
