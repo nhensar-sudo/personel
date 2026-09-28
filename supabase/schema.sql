@@ -209,26 +209,12 @@ create table islem_kayitlari (
 create index idx_islem_kayitlari_kurum on islem_kayitlari(kurum_id, created_at desc);
 
 -- ============================================================================
--- ROW LEVEL SECURITY — İSKELET (Gün 6-9'da auth kurulunca tamamlanacak)
+-- ROW LEVEL SECURITY
 -- ============================================================================
--- Genel prensip:
---   - super_admin  -> her şeyi görür/yazar
---   - idareci      -> yalnızca kendi kurum_id'sindeki veriyi okur VE yazar
---   - ogretmen     -> yalnızca kendi kurum_id'sindeki veriyi okur (yazamaz)
--- Aşağıdaki fonksiyon, giriş yapan kullanıcının personel kaydını bulur.
--- Auth sistemi kurulmadan bu fonksiyon ve politikalar aktif edilmeyecek.
+-- Gün 9'da tamamlandı — gerçek politikalar supabase/rls_policies.sql
+-- dosyasında. Bu dosyayı schema.sql'den SONRA çalıştırın.
 
 create or replace function current_personel()
 returns personel as $$
   select * from personel where auth_user_id = auth.uid() limit 1;
 $$ language sql stable;
-
--- Örnek (Gün 8'de tüm tablolara uygulanacak) — ders_programi için:
--- alter table ders_programi enable row level security;
---
--- create policy "kurum_okuma" on ders_programi for select
---   using (kurum_id = (select kurum_id from current_personel()) or (select rol from current_personel()) = 'super_admin');
---
--- create policy "idareci_yazma" on ders_programi for all
---   using ((select rol from current_personel()) in ('idareci', 'super_admin')
---          and (kurum_id = (select kurum_id from current_personel()) or (select rol from current_personel()) = 'super_admin'));
