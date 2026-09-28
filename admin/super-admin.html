@@ -75,11 +75,16 @@
 
   <div class="wrap" id="panel" hidden>
     <div class="toprow">
-      <h1>Süper Admin Paneli</h1>
+      <h1 id="panel-title">Süper Admin Paneli</h1>
       <button class="secondary" onclick="doLogout()">Çıkış Yap</button>
     </div>
 
-    <div class="card">
+    <div class="card" id="idareci-kurum-info" hidden>
+      <h2>Kurumun</h2>
+      <p id="idareci-kurum-adi" style="font-size:0.95rem; font-weight:600;"></p>
+    </div>
+
+    <div class="card" data-role="super_admin">
       <h2>Kurumlar</h2>
       <table>
         <thead><tr><th>Ad</th><th>Alt Başlık</th><th>Durum</th><th>Oluşturulma</th></tr></thead>
@@ -87,7 +92,7 @@
       </table>
     </div>
 
-    <div class="card">
+    <div class="card" data-role="super_admin">
       <h2>Yeni Kurum Ekle</h2>
       <label>Okul Adı</label>
       <input type="text" id="new-kurum-ad" placeholder="Örn: Atatürk Ortaokulu">
@@ -97,7 +102,7 @@
       <div id="kurum-msg"></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-role="super_admin">
       <h2>İdareci Hesabı Oluştur</h2>
       <label>Kurum</label>
       <select id="idareci-kurum"></select>
@@ -114,7 +119,7 @@
         Zaten hesabı olanlar atlanır. Not: Sercan Ersöz (okul müdürü) burada "öğretmen" rolüyle eklenir,
         istersen sonradan idareci yapabiliriz.
       </p>
-      <label>Kurum</label>
+      <label id="bulk-kurum-label">Kurum</label>
       <select id="bulk-kurum"></select>
       <button onclick="bulkCreateTeachers()">Tüm Öğretmenler İçin Hesap Aç</button>
       <div id="bulk-msg"></div>
@@ -164,7 +169,7 @@
   async function checkInitialState() {
     const { data: { session } } = await client.auth.getSession();
     if (session) {
-      showPanel();
+      await showPanel();
       return;
     }
 
@@ -203,7 +208,7 @@
       const email = `${json.personel_id}@yagcilli.personel.local`;
       const { error: loginErr } = await client.auth.signInWithPassword({ email, password: sifre });
       if (loginErr) throw loginErr;
-      showPanel();
+      await showPanel();
     } catch (e) {
       msg.innerHTML = `<div class="msg err">${e.message}</div>`;
     }
@@ -223,7 +228,7 @@
       msg.innerHTML = `<div class="msg err">Giriş başarısız: ${error.message}</div>`;
       return;
     }
-    showPanel();
+    await showPanel();
   }
 
   async function doLogout() {
@@ -231,10 +236,47 @@
     location.reload();
   }
 
-  function showPanel() {
+  let currentPersonel = null;
+
+  async function showPanel() {
+    const { data: { user } } = await client.auth.getUser();
+    const { data: personelRow, error } = await client
+      .from('personel')
+      .select('id, kurum_id, rol, ad_soyad')
+      .eq('auth_user_id', user.id)
+      .single();
+
+    if (error || !personelRow) {
+      alert('Personel kaydın bulunamadı. Çıkış yapılıyor.');
+      await client.auth.signOut();
+      location.reload();
+      return;
+    }
+    if (!['super_admin', 'idareci'].includes(personelRow.rol)) {
+      alert('Bu panele erişim yetkin yok.');
+      await client.auth.signOut();
+      location.reload();
+      return;
+    }
+
+    currentPersonel = personelRow;
     document.getElementById('auth-screen').hidden = true;
     document.getElementById('panel').hidden = false;
-    init();
+
+    if (personelRow.rol === 'idareci') {
+      document.getElementById('panel-title').textContent = 'İdareci Paneli';
+      document.querySelectorAll('[data-role="super_admin"]').forEach(el => el.hidden = true);
+      document.getElementById('idareci-kurum-info').hidden = false;
+      document.getElementById('bulk-kurum-label').hidden = true;
+      document.getElementById('bulk-kurum').hidden = true;
+
+      const { data: kurum } = await client.from('kurumlar').select('ad').eq('id', personelRow.kurum_id).single();
+      document.getElementById('idareci-kurum-adi').textContent = kurum ? kurum.ad : '(bulunamadı)';
+      document.getElementById('bulk-kurum').innerHTML = `<option value="${personelRow.kurum_id}">${kurum ? kurum.ad : ''}</option>`;
+    } else {
+      document.getElementById('panel-title').textContent = 'Süper Admin Paneli';
+      loadKurumlar();
+    }
   }
 
   // --- Panel işlevleri ---
@@ -327,10 +369,6 @@
     }
     msg.innerHTML = `<div class="msg ok">✅ Şifre güncellendi.</div>`;
     document.getElementById('change-pass-new').value = '';
-  }
-
-  function init() {
-    loadKurumlar();
   }
 
   checkInitialState();
