@@ -742,6 +742,15 @@
       "SOY": "Seçmeli Oyun", "SSOS": "Seç. Sosyal Sorumluluk", "SP": "Seç. Peygamberimizin Hayatı", "SSP": "Seçmeli Spor"
     };
 
+    // "5/A TEK TA" gibi hücreleri [sınıf, ders kodu] olarak ayırır — ders kodu
+    // boşluk içerebildiği için (örn. "TEK TA"), sadece İLK boşluğa göre böler.
+    function splitClassAndCode(entry) {
+      const s = String(entry == null ? '' : entry).trim();
+      const spaceIdx = s.indexOf(' ');
+      if (spaceIdx === -1) return [s, ''];
+      return [s.slice(0, spaceIdx), s.slice(spaceIdx + 1)];
+    }
+
     // Teyit Edilmiş Tam Ders Dağılımı
     let timetable = {
       "Ensar Çetinkaya": {
@@ -1033,7 +1042,7 @@
         } else {
           const item = timetable[t] && timetable[t][info.dayName] ? timetable[t][info.dayName][info.hour] : null;
           if (item) {
-            const [c, s] = item.split(" ");
+            const [c, s] = splitClassAndCode(item);
             cls = c; sub = lessonNames[s] || s;
           } else {
             if (t === "Ensar Çetinkaya") {
@@ -1085,7 +1094,7 @@
       const teacherSchedule = timetable[teacher];
       if (teacherSchedule && teacherSchedule[day] && teacherSchedule[day][hour]) {
         const item = teacherSchedule[day][hour];
-        const [cls, subCode] = item.split(" ");
+        const [cls, subCode] = splitClassAndCode(item);
         const subName = lessonNames[subCode] || subCode;
 
         resultDiv.innerHTML = `
@@ -1145,7 +1154,7 @@
         for (let t in timetable) {
           const entry = timetable[t][day] ? timetable[t][day][h] : null;
           if (entry && entry.startsWith(cls)) {
-            const [_, subCode] = entry.split(" ");
+            const [, subCode] = splitClassAndCode(entry);
             lesson = lessonNames[subCode] || subCode;
             teacher = t;
             break;
@@ -1217,7 +1226,7 @@
       } else {
         const entry = timetable[teacher] && timetable[teacher][day] ? timetable[teacher][day][h] : null;
         if (entry) {
-          const [c, subCode] = entry.split(" ");
+          const [c, subCode] = splitClassAndCode(entry);
           cls = c; lesson = lessonNames[subCode] || subCode;
         } else if (teacher === "Ensar Çetinkaya") {
           cls = "Müdür Yrd. Odası"; lesson = "İdari Görev";
