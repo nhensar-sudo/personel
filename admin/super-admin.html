@@ -22,41 +22,61 @@
   body { background: var(--bg); color: var(--text); padding: 20px; }
   .wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
   h1 { font-size: 1.5rem; color: var(--primary); }
-  .warn-banner {
-    background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
-    padding: 10px 14px; border-radius: 10px; font-size: 0.8rem; line-height: 1.5;
-  }
   .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
   .card h2 { font-size: 1.05rem; color: var(--primary); margin-bottom: 12px; }
   label { display: block; font-size: 0.82rem; font-weight: 600; color: #475569; margin-bottom: 5px; }
   input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; margin-bottom: 12px; }
   button { background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.88rem; }
   button:hover { background: #1d4ed8; }
+  button:disabled { background: #94a3b8; cursor: not-allowed; }
+  button.secondary { background: #f1f5f9; color: #334155; border: 1px solid var(--border); }
+  button.secondary:hover { background: #e2e8f0; }
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
   th { background: #f1f5f9; color: #334155; }
   .msg { margin-top: 10px; padding: 10px 12px; border-radius: 8px; font-size: 0.82rem; }
   .msg.ok { background: #f0fdf4; color: #166534; border-left: 4px solid var(--success); }
   .msg.err { background: #fef2f2; color: #991b1b; border-left: 4px solid var(--danger); }
-  #gate { max-width: 360px; margin: 80px auto; text-align: center; }
+  #auth-screen { max-width: 380px; margin: 60px auto; text-align: center; }
+  #auth-screen p.sub { font-size: 0.85rem; color: var(--muted); margin: 10px 0 16px; }
+  .toprow { display: flex; justify-content: space-between; align-items: center; }
+  .toprow button { padding: 6px 12px; font-size: 0.8rem; }
   [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 
-  <div id="gate">
-    <h1>Süper Admin Girişi</h1>
-    <p style="font-size:0.85rem; color:var(--muted); margin: 10px 0 16px;">Bu geçici bir erişim koruması — Gün 7'de gerçek Supabase Auth ile değiştirilecek.</p>
-    <input type="password" id="gate-pass" placeholder="Erişim şifresi">
-    <button onclick="checkGate()" style="width:100%;">Gir</button>
-    <div id="gate-msg" class="msg err" hidden></div>
+  <div id="auth-screen">
+    <div id="loading-check">
+      <h1>Yükleniyor...</h1>
+    </div>
+
+    <div id="setup-form" hidden>
+      <h1>Süper Admin Hesabı Kur</h1>
+      <p class="sub">Sistemde henüz süper admin yok. İlk hesabı sen oluştur.</p>
+      <label>Ad Soyad</label>
+      <input type="text" id="setup-ad" placeholder="Örn: Arjin Özceylan">
+      <label>Şifre (en az 6 karakter)</label>
+      <input type="password" id="setup-sifre">
+      <button onclick="doSetup()" style="width:100%;">Hesabı Oluştur</button>
+      <div id="setup-msg"></div>
+    </div>
+
+    <div id="login-form" hidden>
+      <h1>Süper Admin Girişi</h1>
+      <label>Ad Soyad</label>
+      <input type="text" id="login-ad" placeholder="Kayıtlı adını yaz">
+      <label>Şifre</label>
+      <input type="password" id="login-sifre">
+      <button onclick="doLogin()" style="width:100%;">Giriş Yap</button>
+      <div id="login-msg"></div>
+    </div>
   </div>
 
   <div class="wrap" id="panel" hidden>
-    <h1>Süper Admin Paneli</h1>
-    <div class="warn-banner">
-      ⚠️ Bu panel henüz gerçek kimlik doğrulama (Supabase Auth) ile korunmuyor — sadece geliştirme aşamasında dahili kullanım içindir.
-      Satır bazlı güvenlik (RLS) Gün 8-9'da aktif edilene kadar bu sayfayı kimseyle paylaşma.
+    <div class="toprow">
+      <h1>Süper Admin Paneli</h1>
+      <button class="secondary" onclick="doLogout()">Çıkış Yap</button>
     </div>
 
     <div class="card">
@@ -78,40 +98,43 @@
     </div>
 
     <div class="card">
-      <h2>İlk İdareci (Müdür) Kaydı Oluştur</h2>
-      <p style="font-size:0.78rem; color:var(--muted); margin-bottom:12px;">
-        Bu, personel tablosunda kayıt oluşturur ve geçici bir şifre üretir. Gerçek giriş yapabilmesi için
-        Gün 7'de Supabase Auth bağlantısı tamamlanmalı — bugün sadece kayıt ve şifre hazırlanır.
-      </p>
+      <h2>İdareci Hesabı Oluştur</h2>
       <label>Kurum</label>
       <select id="idareci-kurum"></select>
       <label>Ad Soyad</label>
-      <input type="text" id="idareci-ad" placeholder="Örn: Sercan Ersöz">
-      <button onclick="addIdareci()">İdareci Kaydı Oluştur</button>
+      <input type="text" id="idareci-ad" placeholder="Örn: Ensar Çetinkaya">
+      <button onclick="createAccount('idareci')">İdareci Hesabı Oluştur</button>
       <div id="idareci-msg"></div>
+    </div>
+
+    <div class="card">
+      <h2>Tanınan Öğretmenler İçin Toplu Hesap Aç</h2>
+      <p style="font-size:0.78rem; color:var(--muted); margin-bottom:12px;">
+        Uygulamadaki 11 tanınan öğretmen adı için (ders programı sisteminde kayıtlı) tek tıkla hesap açar.
+        Zaten hesabı olanlar atlanır. Not: Sercan Ersöz (okul müdürü) burada "öğretmen" rolüyle eklenir,
+        istersen sonradan idareci yapabiliriz.
+      </p>
+      <label>Kurum</label>
+      <select id="bulk-kurum"></select>
+      <button onclick="bulkCreateTeachers()">Tüm Öğretmenler İçin Hesap Aç</button>
+      <div id="bulk-msg"></div>
+    </div>
+
+    <div class="card">
+      <h2>Şifremi Değiştir</h2>
+      <label>Yeni Şifre (en az 6 karakter)</label>
+      <input type="password" id="change-pass-new">
+      <button onclick="changeMyPassword()">Şifreyi Güncelle</button>
+      <div id="change-pass-msg"></div>
     </div>
   </div>
 
 <script>
-  // GEÇİCİ eşik — gerçek güvenlik değil, sadece kazara erişimi önler. Gün 7'de kaldırılacak.
-  const TEMP_GATE_PASSWORD = 'yagcilli2026';
-
-  function checkGate() {
-    const val = document.getElementById('gate-pass').value;
-    if (val === TEMP_GATE_PASSWORD) {
-      document.getElementById('gate').hidden = true;
-      document.getElementById('panel').hidden = false;
-      init();
-    } else {
-      const m = document.getElementById('gate-msg');
-      m.hidden = false;
-      m.textContent = 'Şifre yanlış.';
-    }
-  }
-
   const supabaseUrl = 'https://mqrfecyvvptjmdeopfsv.supabase.co';
   const supabaseKey = 'sb_publishable_NkbDMnh_Iuxwh3pnwI_Fpw_SAmHuyeH';
   const client = supabase.createClient(supabaseUrl, supabaseKey);
+
+  const KNOWN_TEACHERS = ["Kadir Eser", "Yasemin Çakır", "Bahar Sarı", "Levent Dallık", "Esma Baydar", "Demet Taşdemir", "Turan Avuç", "Ensar Çetinkaya", "Sercan Ersöz", "Asude Genç", "Erhan Işık"];
 
   function turkishFold(str) {
     return String(str)
@@ -120,6 +143,101 @@
       .replace(/[^a-z]/g, '');
   }
 
+  async function callFunction(name, body) {
+    const { data: sessionData } = await client.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    const res = await fetch(`${supabaseUrl}/functions/v1/${name}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseKey,
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+    return json;
+  }
+
+  // --- Giriş / Kurulum akışı ---
+  async function checkInitialState() {
+    const { data: { session } } = await client.auth.getSession();
+    if (session) {
+      showPanel();
+      return;
+    }
+
+    const { count } = await client.from('personel').select('id', { count: 'exact', head: true }).eq('rol', 'super_admin');
+    document.getElementById('loading-check').hidden = true;
+    if (!count || count === 0) {
+      document.getElementById('setup-form').hidden = false;
+    } else {
+      document.getElementById('login-form').hidden = false;
+    }
+  }
+
+  async function resolveEmailByName(adSoyad) {
+    const { data, error } = await client.from('personel').select('id').eq('ad_soyad', adSoyad).eq('aktif', true).maybeSingle();
+    if (error || !data) return null;
+    return `${data.id}@yagcilli.personel.local`;
+  }
+
+  async function doSetup() {
+    const ad = document.getElementById('setup-ad').value.trim();
+    const sifre = document.getElementById('setup-sifre').value;
+    const msg = document.getElementById('setup-msg');
+    if (!ad || sifre.length < 6) {
+      msg.innerHTML = `<div class="msg err">Ad Soyad ve en az 6 karakterlik şifre gerekli.</div>`;
+      return;
+    }
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/bootstrap-super-admin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey },
+        body: JSON.stringify({ ad_soyad: ad, sifre }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Kurulum başarısız.');
+
+      const email = `${json.personel_id}@yagcilli.personel.local`;
+      const { error: loginErr } = await client.auth.signInWithPassword({ email, password: sifre });
+      if (loginErr) throw loginErr;
+      showPanel();
+    } catch (e) {
+      msg.innerHTML = `<div class="msg err">${e.message}</div>`;
+    }
+  }
+
+  async function doLogin() {
+    const ad = document.getElementById('login-ad').value.trim();
+    const sifre = document.getElementById('login-sifre').value;
+    const msg = document.getElementById('login-msg');
+    const email = await resolveEmailByName(ad);
+    if (!email) {
+      msg.innerHTML = `<div class="msg err">Bu isimde kayıtlı bir hesap bulunamadı.</div>`;
+      return;
+    }
+    const { error } = await client.auth.signInWithPassword({ email, password: sifre });
+    if (error) {
+      msg.innerHTML = `<div class="msg err">Giriş başarısız: ${error.message}</div>`;
+      return;
+    }
+    showPanel();
+  }
+
+  async function doLogout() {
+    await client.auth.signOut();
+    location.reload();
+  }
+
+  function showPanel() {
+    document.getElementById('auth-screen').hidden = true;
+    document.getElementById('panel').hidden = false;
+    init();
+  }
+
+  // --- Panel işlevleri ---
   async function loadKurumlar() {
     const { data, error } = await client.from('kurumlar').select('*').order('created_at', { ascending: true });
     const tbody = document.getElementById('kurum-list');
@@ -139,8 +257,9 @@
         <td>${new Date(k.created_at).toLocaleDateString('tr-TR')}</td>
       </tr>`).join('');
 
-    const sel = document.getElementById('idareci-kurum');
-    sel.innerHTML = data.map(k => `<option value="${k.id}">${k.ad}</option>`).join('');
+    const options = data.map(k => `<option value="${k.id}">${k.ad}</option>`).join('');
+    document.getElementById('idareci-kurum').innerHTML = options;
+    document.getElementById('bulk-kurum').innerHTML = options;
     return data;
   }
 
@@ -161,32 +280,60 @@
     loadKurumlar();
   }
 
-  async function addIdareci() {
+  async function createAccount(rol) {
     const kurumId = document.getElementById('idareci-kurum').value;
     const adSoyad = document.getElementById('idareci-ad').value.trim();
     const msg = document.getElementById('idareci-msg');
     if (!kurumId) { msg.innerHTML = `<div class="msg err">Önce bir kurum ekleyip seçmelisin.</div>`; return; }
     if (!adSoyad) { msg.innerHTML = `<div class="msg err">Ad Soyad gerekli.</div>`; return; }
 
-    const gecicSifre = turkishFold(adSoyad);
-    const { error } = await client.from('personel').insert({
-      kurum_id: kurumId, ad_soyad: adSoyad, rol: 'idareci', aktif: true
-    });
+    try {
+      const result = await callFunction('create-personel-account', { kurum_id: kurumId, ad_soyad: adSoyad, rol });
+      msg.innerHTML = `<div class="msg ok">
+        ✅ "${result.ad_soyad}" ${rol} olarak kaydedildi.<br>
+        Geçici şifre: <strong>${result.gecici_sifre}</strong>
+      </div>`;
+      document.getElementById('idareci-ad').value = '';
+    } catch (e) {
+      msg.innerHTML = `<div class="msg err">${e.message}</div>`;
+    }
+  }
+
+  async function bulkCreateTeachers() {
+    const kurumId = document.getElementById('bulk-kurum').value;
+    const msg = document.getElementById('bulk-msg');
+    if (!kurumId) { msg.innerHTML = `<div class="msg err">Önce bir kurum seç.</div>`; return; }
+
+    const results = [];
+    for (const ad of KNOWN_TEACHERS) {
+      try {
+        const r = await callFunction('create-personel-account', { kurum_id: kurumId, ad_soyad: ad, rol: 'ogretmen' });
+        results.push(`✅ ${r.ad_soyad} — şifre: ${r.gecici_sifre}`);
+      } catch (e) {
+        results.push(`⚠️ ${ad}: ${e.message}`);
+      }
+    }
+    msg.innerHTML = `<div class="msg ok">${results.join('<br>')}</div>`;
+  }
+
+  async function changeMyPassword() {
+    const yeni = document.getElementById('change-pass-new').value;
+    const msg = document.getElementById('change-pass-msg');
+    if (yeni.length < 6) { msg.innerHTML = `<div class="msg err">En az 6 karakter olmalı.</div>`; return; }
+    const { error } = await client.auth.updateUser({ password: yeni });
     if (error) {
-      msg.innerHTML = `<div class="msg err">Kaydedilemedi: ${error.message}</div>`;
+      msg.innerHTML = `<div class="msg err">${error.message}</div>`;
       return;
     }
-    msg.innerHTML = `<div class="msg ok">
-      ✅ "${adSoyad}" idareci olarak kaydedildi.<br>
-      Geçici şifre: <strong>${gecicSifre}</strong><br>
-      <span style="font-size:0.75rem;">Not: Bu şifreyle giriş yapabilmesi için Gün 7'de Auth bağlantısı tamamlanmalı.</span>
-    </div>`;
-    document.getElementById('idareci-ad').value = '';
+    msg.innerHTML = `<div class="msg ok">✅ Şifre güncellendi.</div>`;
+    document.getElementById('change-pass-new').value = '';
   }
 
   function init() {
     loadKurumlar();
   }
+
+  checkInitialState();
 </script>
 </body>
 </html>
