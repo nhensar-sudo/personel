@@ -23,15 +23,23 @@ begin
     affected_kurum := NEW.kurum_id;
   end if;
 
-  insert into islem_kayitlari (kurum_id, personel_id, islem_tipi, tablo_adi, kayit_id, detay)
-  values (
-    affected_kurum,
-    actor_id,
-    case TG_OP when 'INSERT' then 'ekle' when 'UPDATE' then 'guncelle' when 'DELETE' then 'sil' end,
-    TG_TABLE_NAME,
-    case TG_OP when 'DELETE' then OLD.id else NEW.id end,
-    case TG_OP when 'DELETE' then to_jsonb(OLD) else to_jsonb(NEW) end
-  );
+  -- Loglama ASLA asıl işlemi (INSERT/UPDATE/DELETE) engellememeli. Örneğin bir
+  -- kurum silinirken CASCADE ile bağlı kayıtlar da silinir ve her biri için bu
+  -- trigger çalışır — ama o anda kurum_id artık kurumlar tablosunda yok, foreign
+  -- key ihlali oluşur. Böyle durumlarda logu atla, silme işlemi yine de devam etsin.
+  begin
+    insert into islem_kayitlari (kurum_id, personel_id, islem_tipi, tablo_adi, kayit_id, detay)
+    values (
+      affected_kurum,
+      actor_id,
+      case TG_OP when 'INSERT' then 'ekle' when 'UPDATE' then 'guncelle' when 'DELETE' then 'sil' end,
+      TG_TABLE_NAME,
+      case TG_OP when 'DELETE' then OLD.id else NEW.id end,
+      case TG_OP when 'DELETE' then to_jsonb(OLD) else to_jsonb(NEW) end
+    );
+  exception when others then
+    null;
+  end;
 
   return null; -- AFTER trigger olduğu için dönüş değeri kullanılmıyor
 end;
