@@ -12,8 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
 
-  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
@@ -52,6 +51,11 @@
       width: 100%;
       max-width: 520px;
     }
+
+    [hidden] { display: none !important; }
+
+    .role-gated { display: none; }
+    body.rol-idareci .role-gated, body.rol-super_admin .role-gated { display: block; }
 
     header {
       text-align: center;
@@ -405,10 +409,30 @@
 </head>
 <body>
 
-  <div class="container">
+  <div class="container" id="login-screen">
     <header>
       <h1>Personel</h1>
-      <p>Yağcıllı Ortaokulu Yönetim Sistemi</p>
+      <p id="login-kurum-adi">Yağcıllı Ortaokulu Yönetim Sistemi</p>
+    </header>
+    <div class="card" style="display:flex; flex-direction:column; gap:0;">
+      <div class="form-group">
+        <label>Ad Soyad</label>
+        <input type="text" id="login-ad" placeholder="Kayıtlı adınızı yazın">
+      </div>
+      <div class="form-group">
+        <label>Şifre</label>
+        <input type="password" id="login-sifre">
+      </div>
+      <button class="btn-submit" onclick="personelGirisYap()">Giriş Yap</button>
+      <div id="login-msg" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <div class="container" id="app-container" hidden>
+    <header>
+      <h1>Personel</h1>
+      <p id="app-kurum-adi">Yağcıllı Ortaokulu Yönetim Sistemi</p>
+      <p style="margin-top:4px;"><span id="app-kullanici-adi" style="font-size:0.75rem; color:var(--muted);"></span> <a href="#" onclick="personelCikisYap(); return false;" style="font-size:0.75rem; color:var(--secondary); font-weight:600; margin-left:6px;">Çıkış Yap</a></p>
     </header>
 
     <!-- ANLIK CANLI DURUM ÇUBUĞU -->
@@ -601,7 +625,7 @@
 
         <div id="class-schedule-result"></div>
 
-        <div class="upload-box" onclick="document.getElementById('schedule-excel-input').click()">
+        <div class="upload-box role-gated" onclick="document.getElementById('schedule-excel-input').click()">
           <input type="file" id="schedule-excel-input" accept=".xlsx,.xls,.csv" onchange="handleScheduleExcelUpload(event)">
           <div class="upload-label">📤 Ders Programı Excel Dosyası Yükle</div>
           <div class="upload-hint">Dağıtmatik çıktısı veya sütun başlıklı herhangi bir liste (Öğretmen, Sınıf, Gün, Saat, Ders) otomatik tanınır — tanınamazsa sütunları eşleştirmeniz istenir. Yüklediğinizde tüm site (öğretmen, sınıf ve canlı durum programları) otomatik güncellenir.</div>
@@ -612,7 +636,7 @@
       <div id="class-exams-tab" style="display:none;">
         <div id="class-exams-list"></div>
 
-        <div class="exam-form">
+        <div class="exam-form role-gated">
           <h3 style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.05rem; color: var(--primary); margin-bottom: 10px;">Sınav Ekle / Güncelle</h3>
           <p style="font-size:0.78rem; color: var(--muted); margin-bottom: 10px;">Eklediğiniz sınav tarihi tüm öğretmenler ve kullanıcılar tarafından görüntülenebilir.</p>
 
@@ -658,28 +682,30 @@
       <button class="btn-submit" onclick="queryDuty()">Nöbetçileri Göster</button>
       <div id="duty-result"></div>
 
-      <div class="upload-box" onclick="document.getElementById('duty-excel-input').click()">
+      <div class="upload-box role-gated" onclick="document.getElementById('duty-excel-input').click()">
         <input type="file" id="duty-excel-input" accept=".xlsx,.xls,.csv" onchange="handleDutyExcelUpload(event)">
         <div class="upload-label">📤 Nöbet Çizelgesi Excel Dosyası Yükle</div>
         <div class="upload-hint">Yüklediğinizde nöbet takvimi tüm kullanıcılarda otomatik güncellenir</div>
       </div>
       <div id="duty-upload-result"></div>
 
-      <hr style="margin: 20px 0; border: 0; border-top: 1px dashed var(--border);">
+      <div class="role-gated">
+        <hr style="margin: 20px 0; border: 0; border-top: 1px dashed var(--border);">
 
-      <h3 style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.15rem; color: var(--primary); margin-bottom: 8px;">Yeni Dönem Nöbet Dağıtıcı (Generator)</h3>
-      <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 12px;">Öğretmenlerin boş günlerini koruyarak dengeli ve kurallara uygun rastgele nöbet listesi üretir.</p>
-      
-      <div class="form-group">
-        <label>Başlangıç Tarihi:</label>
-        <input type="date" id="gen-start-date" value="2027-02-08">
+        <h3 style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.15rem; color: var(--primary); margin-bottom: 8px;">Yeni Dönem Nöbet Dağıtıcı (Generator)</h3>
+        <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 12px;">Öğretmenlerin boş günlerini koruyarak dengeli ve kurallara uygun rastgele nöbet listesi üretir.</p>
+
+        <div class="form-group">
+          <label>Başlangıç Tarihi:</label>
+          <input type="date" id="gen-start-date" value="2027-02-08">
+        </div>
+        <div class="form-group">
+          <label>Bitiş Tarihi:</label>
+          <input type="date" id="gen-end-date" value="2027-06-18">
+        </div>
+        <button class="btn-action" onclick="generateNewDutySchedule()">🎲 Yeni Nöbet Çizelgesi Üret & İndir (Excel/CSV)</button>
+        <div id="gen-result"></div>
       </div>
-      <div class="form-group">
-        <label>Bitiş Tarihi:</label>
-        <input type="date" id="gen-end-date" value="2027-06-18">
-      </div>
-      <button class="btn-action" onclick="generateNewDutySchedule()">🎲 Yeni Nöbet Çizelgesi Üret & İndir (Excel/CSV)</button>
-      <div id="gen-result"></div>
     </div>
 
     <!-- 5. TAŞIMALI SERVİS VE NÖBET NOTLARI -->
@@ -880,62 +906,138 @@
       "2026-12-31": { bahce: "Levent Dallık", bina: "Demet Taşdemir" }
     };
 
-    // --- FIREBASE ENTEGRASYONU (Tüm Kullanıcılar Arası Paylaşımlı Veri) ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyDapb1RCUQ-Gwyc5hVxseSwxgYgnAnlTBc",
-      authDomain: "yagcilli-personel.firebaseapp.com",
-      projectId: "yagcilli-personel",
-      storageBucket: "yagcilli-personel.firebasestorage.app",
-      messagingSenderId: "40166908484",
-      appId: "1:40166908484:web:6831897e1d55ffe8ce1211"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    // --- SUPABASE ENTEGRASYONU (Tüm Kullanıcılar Arası Paylaşımlı Veri) ---
+    const supabaseUrl = 'https://mqrfecyvvptjmdeopfsv.supabase.co';
+    const supabaseKey = 'sb_publishable_NkbDMnh_Iuxwh3pnwI_Fpw_SAmHuyeH';
+    const db = supabase.createClient(supabaseUrl, supabaseKey);
 
     let examsCache = {};
+    let notesCache = [];
+    let currentPersonel = null; // { id, ad_soyad, rol, kurum_id }
 
-    db.collection('config').doc('timetable').onSnapshot(docSnap => {
-      if (docSnap.exists && docSnap.data().timetable) {
-        timetable = docSnap.data().timetable;
-        syncTeacherDropdowns();
-        refreshActiveView();
+    async function personelGirisYap() {
+      const ad = document.getElementById('login-ad').value.trim();
+      const sifre = document.getElementById('login-sifre').value;
+      const msg = document.getElementById('login-msg');
+      if (!ad || !sifre) {
+        msg.innerHTML = `<div class="result-box warning-box">Ad Soyad ve şifre gerekli.</div>`;
+        return;
       }
-    }, err => console.warn('Ders programı senkron hatası:', err));
 
-    db.collection('config').doc('duty').onSnapshot(docSnap => {
-      if (docSnap.exists && docSnap.data().dutyDatabase) {
-        dutyDatabase = docSnap.data().dutyDatabase;
-        refreshActiveView();
+      const { data: personelRow } = await db.from('personel').select('id').eq('ad_soyad', ad).eq('aktif', true).maybeSingle();
+      if (!personelRow) {
+        msg.innerHTML = `<div class="result-box warning-box">Bu isimde kayıtlı bir hesap bulunamadı.</div>`;
+        return;
       }
-    }, err => console.warn('Nöbet çizelgesi senkron hatası:', err));
 
-    db.collection('config').doc('lessonNames').onSnapshot(docSnap => {
-      if (docSnap.exists && docSnap.data().lessonNames) {
-        Object.assign(lessonNames, docSnap.data().lessonNames);
-        refreshActiveView();
+      const { error: girisHatasi } = await db.auth.signInWithPassword({ email: `${personelRow.id}@yagcilli.personel.local`, password: sifre });
+      if (girisHatasi) {
+        msg.innerHTML = `<div class="result-box warning-box">Şifre hatalı.</div>`;
+        return;
       }
-    }, err => console.warn('Ders adı sözlüğü senkron hatası:', err));
+      msg.innerHTML = '';
+      await girisSonrasiBaslat();
+    }
 
-    db.collection('exams').onSnapshot(snapshot => {
+    function personelCikisYap() {
+      db.auth.signOut();
+      location.reload();
+    }
+
+    async function girisSonrasiBaslat() {
+      const { data: { user } } = await db.auth.getUser();
+      if (!user) return;
+      const { data: personelRow } = await db.from('personel').select('id, ad_soyad, rol, kurum_id').eq('auth_user_id', user.id).single();
+
+      if (!personelRow || personelRow.rol === 'super_admin') {
+        await db.auth.signOut();
+        document.getElementById('login-msg').innerHTML = `<div class="result-box warning-box">Bu uygulama idareci ve öğretmenler içindir.</div>`;
+        return;
+      }
+
+      currentPersonel = personelRow;
+      document.body.classList.add('rol-' + personelRow.rol);
+      document.getElementById('app-kullanici-adi').textContent = `${personelRow.ad_soyad} (${personelRow.rol === 'idareci' ? 'İdareci' : 'Öğretmen'})`;
+
+      const { data: kurum } = await db.from('kurumlar').select('ad, alt_baslik').eq('id', personelRow.kurum_id).single();
+      if (kurum) {
+        document.getElementById('app-kurum-adi').textContent = kurum.alt_baslik || kurum.ad;
+      }
+
+      document.getElementById('login-screen').hidden = true;
+      document.getElementById('app-container').hidden = false;
+
+      await Promise.all([loadTimetable(), loadLessonNames(), loadDuty(), loadExams(), loadNotes()]);
+      syncTeacherDropdowns();
+      refreshActiveView();
+      setupRealtime();
+    }
+
+    async function loadTimetable() {
+      const { data } = await db.from('ders_programi').select('gun, saat, sinif, ders_kodu, ogretmen:ogretmen_id(ad_soyad)').eq('kurum_id', currentPersonel.kurum_id);
       const next = {};
-      snapshot.forEach(docSnap => {
-        const d = docSnap.data();
-        if (!next[d.class]) next[d.class] = [];
-        next[d.class].push({ id: docSnap.id, ...d });
+      (data || []).forEach(row => {
+        const ad = row.ogretmen && row.ogretmen.ad_soyad;
+        if (!ad) return;
+        if (!next[ad]) next[ad] = { "Pazartesi": {}, "Salı": {}, "Çarşamba": {}, "Perşembe": {}, "Cuma": {} };
+        next[ad][row.gun][row.saat] = row.ders_kodu ? `${row.sinif} ${row.ders_kodu}` : row.sinif;
+      });
+      timetable = next;
+    }
+
+    async function loadLessonNames() {
+      const { data } = await db.from('ders_adlari').select('kod, ad').eq('kurum_id', currentPersonel.kurum_id);
+      (data || []).forEach(row => { lessonNames[row.kod] = row.ad; });
+    }
+
+    async function loadDuty() {
+      const { data } = await db.from('nobet_cizelgesi').select('tarih, bahce:bahce_ogretmen_id(ad_soyad), bina:bina_ogretmen_id(ad_soyad)').eq('kurum_id', currentPersonel.kurum_id);
+      const next = {};
+      (data || []).forEach(row => {
+        next[row.tarih] = { bahce: (row.bahce && row.bahce.ad_soyad) || '-', bina: (row.bina && row.bina.ad_soyad) || '-' };
+      });
+      dutyDatabase = next;
+    }
+
+    async function loadExams() {
+      const { data } = await db.from('sinavlar').select('*').eq('kurum_id', currentPersonel.kurum_id);
+      const next = {};
+      (data || []).forEach(row => {
+        if (!next[row.sinif]) next[row.sinif] = [];
+        next[row.sinif].push({ id: row.id, class: row.sinif, branch: row.brans, donem: row.donem, sinavNo: row.sinav_no, date: row.tarih });
       });
       examsCache = next;
-      const examsTab = document.getElementById('class-exams-tab');
-      if (examsTab && examsTab.style.display !== 'none' && document.getElementById('classes-view').style.display === 'block') {
-        renderExamsForClass();
-      }
-    }, err => console.warn('Sınav takvimi senkron hatası:', err));
+    }
 
-    let notesCache = [];
-    db.collection('notes').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-      notesCache = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-      const notesView = document.getElementById('notes-view');
-      if (notesView && notesView.style.display === 'block') renderNotesList();
-    }, err => console.warn('Not defteri senkron hatası:', err));
+    async function loadNotes() {
+      const { data } = await db.from('notlar').select('id, tarih, servis, not_metni, olusturan_id, created_at').eq('kurum_id', currentPersonel.kurum_id).order('created_at', { ascending: false });
+      notesCache = (data || []).map(row => ({ id: row.id, date: row.tarih, service: row.servis, note: row.not_metni, creatorId: row.olusturan_id }));
+    }
+
+    function setupRealtime() {
+      const kurumId = currentPersonel.kurum_id;
+      db.channel('veri-degisiklikleri')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ders_programi', filter: `kurum_id=eq.${kurumId}` }, async () => { await loadTimetable(); syncTeacherDropdowns(); refreshActiveView(); })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ders_adlari', filter: `kurum_id=eq.${kurumId}` }, async () => { await loadLessonNames(); refreshActiveView(); })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'nobet_cizelgesi', filter: `kurum_id=eq.${kurumId}` }, async () => { await loadDuty(); refreshActiveView(); })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'sinavlar', filter: `kurum_id=eq.${kurumId}` }, async () => {
+          await loadExams();
+          const examsTab = document.getElementById('class-exams-tab');
+          if (examsTab && examsTab.style.display !== 'none' && document.getElementById('classes-view').style.display === 'block') renderExamsForClass();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'notlar', filter: `kurum_id=eq.${kurumId}` }, async () => {
+          await loadNotes();
+          const notesView = document.getElementById('notes-view');
+          if (notesView && notesView.style.display === 'block') renderNotesList();
+        })
+        .subscribe();
+    }
+
+    // Sayfa yeniden açıldığında, daha önce giriş yapılmışsa otomatik devam et
+    (async () => {
+      const { data: { session } } = await db.auth.getSession();
+      if (session) await girisSonrasiBaslat();
+    })();
 
     function refreshActiveView() {
       const visible = Array.from(document.querySelectorAll('.view')).find(v => v.style.display === 'block');
@@ -1337,7 +1439,7 @@
       div.innerHTML = html;
     }
 
-    function addExam() {
+    async function addExam() {
       const cls = document.getElementById('class-select').value;
       const branch = document.getElementById('exam-branch-select').value;
       const donem = document.getElementById('exam-donem-select').value;
@@ -1350,33 +1452,28 @@
         return;
       }
 
-      const docId = `${cls}_${branch}_${donem}_${sinavNo}`.replace(/[\/\s.]/g, '-');
-      db.collection('exams').doc(docId).set({ class: cls, branch, donem, sinavNo, date })
-        .then(() => {
-          resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">✅ Sınav kaydedildi ve tüm kullanıcılara yansıtıldı.</div>`;
-          if (!examsCache[cls]) examsCache[cls] = [];
-          const idx = examsCache[cls].findIndex(e => e.id === docId);
-          const record = { id: docId, class: cls, branch, donem, sinavNo, date };
-          if (idx >= 0) examsCache[cls][idx] = record; else examsCache[cls].push(record);
-          renderExamsForClass();
-        })
-        .catch(err => {
-          resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Kaydedilemedi: ${err.message}</div>`;
-        });
+      const { error } = await db.from('sinavlar').upsert({
+        kurum_id: currentPersonel.kurum_id, sinif: cls, brans: branch, donem: parseInt(donem), sinav_no: sinavNo, tarih: date
+      }, { onConflict: 'kurum_id,sinif,brans,donem,sinav_no' });
+
+      if (error) {
+        resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Kaydedilemedi: ${error.message}</div>`;
+        return;
+      }
+      resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">✅ Sınav kaydedildi ve tüm kullanıcılara yansıtıldı.</div>`;
+      await loadExams();
+      renderExamsForClass();
     }
 
-    function deleteExam(id) {
+    async function deleteExam(id) {
       if (!confirm('Bu sınav tarihini silmek istediğinize emin misiniz?')) return;
-      db.collection('exams').doc(id).delete()
-        .then(() => {
-          Object.keys(examsCache).forEach(cls => {
-            examsCache[cls] = examsCache[cls].filter(e => e.id !== id);
-          });
-          renderExamsForClass();
-        })
-        .catch(err => {
-          alert('Silinemedi: ' + err.message);
-        });
+      const { error } = await db.from('sinavlar').delete().eq('id', id);
+      if (error) {
+        alert('Silinemedi: ' + error.message);
+        return;
+      }
+      await loadExams();
+      renderExamsForClass();
     }
 
     // --- EXCEL YÜKLEME: DERS PROGRAMI (Dağıtmatik "Öğretmen El Programı" çıktısı) ---
@@ -1679,37 +1776,88 @@
     }
 
     // Ortak sonuç uygulayıcı: hem otomatik algılama hem manuel eşleştirme buradan geçer
-    function applyScheduleParseResult(result, resDiv) {
-      const { partialTimetable, newLessonNames, unmatchedTeachers } = result;
-      const teacherCount = Object.keys(partialTimetable).length;
+    async function callEdgeFunction(name, body) {
+      const { data: sessionData } = await db.auth.getSession();
+      const token = sessionData && sessionData.session && sessionData.session.access_token;
+      const res = await fetch(`${supabaseUrl}/functions/v1/${name}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': supabaseKey, ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+      return json;
+    }
 
-      if (teacherCount === 0) {
+    async function applyScheduleParseResult(result, resDiv) {
+      const { partialTimetable, newLessonNames, unmatchedTeachers } = result;
+      const teacherNames = Object.keys(partialTimetable);
+
+      if (teacherNames.length === 0) {
         resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosyada tanınabilir bir ders programı satırı bulunamadı. Eşleştirmeleri kontrol edip tekrar deneyin.</div>`;
         return;
       }
 
-      // Tam değiştirme (merge değil): yüklenen dosya o dönemin güncel/otoriter programı kabul edilir.
-      // Eskiden kalma, yeni dosyada artık geçmeyen öğretmen kayıtları (silinmiş/yanlış sayfa vb.)
-      // burada temizlenmiş olur — merge mantığı bunları sonsuza kadar biriktiriyordu.
-      const mergedTimetable = partialTimetable;
-      const mergedLessonNames = Object.assign({}, lessonNames, newLessonNames);
+      resDiv.innerHTML = `<div class="result-box">⏳ Kaydediliyor...</div>`;
 
-      Promise.all([
-        db.collection('config').doc('timetable').set({ timetable: mergedTimetable }),
-        db.collection('config').doc('lessonNames').set({ lessonNames: mergedLessonNames })
-      ]).then(() => {
-        timetable = mergedTimetable;
-        lessonNames = mergedLessonNames;
+      try {
+        // 1) Ders adları sözlüğünü güncelle
+        const dersAdlariRows = Object.entries(newLessonNames).map(([kod, ad]) => ({ kurum_id: currentPersonel.kurum_id, kod, ad }));
+        if (dersAdlariRows.length) {
+          await db.from('ders_adlari').upsert(dersAdlariRows, { onConflict: 'kurum_id,kod' });
+        }
+
+        // 2) Öğretmen -> personel.id eşleştirmesi; dosyada olup sistemde henüz hesabı olmayan
+        // öğretmenler için otomatik hesap açılır (Gün 8: ders programı yüklenince otomatik hesap).
+        const { data: mevcutPersonel } = await db.from('personel').select('id, ad_soyad').eq('kurum_id', currentPersonel.kurum_id);
+        const personelMap = {};
+        (mevcutPersonel || []).forEach(p => { personelMap[p.ad_soyad] = p.id; });
+
+        const yeniHesapAcilanlar = [];
+        for (const ad of teacherNames) {
+          if (personelMap[ad]) continue;
+          try {
+            const sonuc = await callEdgeFunction('create-personel-account', { kurum_id: currentPersonel.kurum_id, ad_soyad: ad, rol: 'ogretmen' });
+            personelMap[ad] = sonuc.personel_id;
+            yeniHesapAcilanlar.push(`${ad} (şifre: ${sonuc.gecici_sifre})`);
+          } catch (e) { /* hesap açılamazsa bu öğretmenin dersleri aşağıda atlanır */ }
+        }
+
+        // 3) Tam değiştirme: kurumun ders programını silip yeniden yaz — eskiden kalma,
+        // yeni dosyada artık geçmeyen kayıtlar (yanlış sayfa vb.) burada temizlenmiş olur.
+        await db.from('ders_programi').delete().eq('kurum_id', currentPersonel.kurum_id);
+
+        const rows = [];
+        teacherNames.forEach(ad => {
+          const ogretmenId = personelMap[ad];
+          if (!ogretmenId) return;
+          Object.entries(partialTimetable[ad]).forEach(([gun, saatler]) => {
+            Object.entries(saatler).forEach(([saat, hucre]) => {
+              const [sinif, dersKodu] = splitClassAndCode(hucre);
+              rows.push({ kurum_id: currentPersonel.kurum_id, ogretmen_id: ogretmenId, gun, saat: parseInt(saat), sinif, ders_kodu: dersKodu });
+            });
+          });
+        });
+        if (rows.length) {
+          const { error } = await db.from('ders_programi').insert(rows);
+          if (error) throw error;
+        }
+
+        await Promise.all([loadTimetable(), loadLessonNames()]);
         syncTeacherDropdowns();
-        let msg = `✅ ${teacherCount} öğretmenin ders programı güncellendi ve tüm kullanıcılara aktarıldı.`;
+
+        let msg = `✅ ${teacherNames.length} öğretmenin ders programı güncellendi ve tüm kullanıcılara aktarıldı.`;
+        if (yeniHesapAcilanlar.length) {
+          msg += `<br><span style="font-size:0.78rem;">🆕 Otomatik hesap açılan yeni öğretmen(ler): ${yeniHesapAcilanlar.join(', ')}</span>`;
+        }
         if (unmatchedTeachers.length) {
           msg += `<br><span style="font-size:0.75rem;">⚠️ Bilinen öğretmen listesiyle otomatik eşleşmeyen isim(ler): ${unmatchedTeachers.join(', ')} — yazımı kontrol edin, program yine de kaydedildi.</span>`;
         }
         resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">${msg}</div>`;
         renderClassSchedule();
-      }).catch(err => {
-        resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Firebase'e kaydedilemedi: ${err.message}</div>`;
-      });
+      } catch (err) {
+        resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Kaydedilemedi: ${err.message}</div>`;
+      }
     }
 
     // --- MANUEL SÜTUN EŞLEŞTİRME (otomatik algılama başarısız olduğunda son çare) ---
@@ -1944,7 +2092,7 @@
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = function (e) {
+      reader.onload = async function (e) {
         try {
           const data = new Uint8Array(e.target.result);
           const wb = XLSX.read(data, { type: 'array', cellDates: true });
@@ -1964,17 +2112,48 @@
             return;
           }
 
-          dutyDatabase = newDuty;
-          db.collection('config').doc('duty').set({ dutyDatabase: newDuty })
-            .then(() => {
-              const toplam = Object.keys(newDuty).length;
-              resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">✅ ${toplam} günlük nöbet kaydı güncellendi ve tüm kullanıcılara aktarıldı.<br><span style="font-size:0.75rem;">Kullanılan sayfalar: ${usedSheets.join(', ')}</span></div>`;
-            })
-            .catch(err => {
-              resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Firebase'e kaydedilemedi: ${err.message}</div>`;
-            });
+          resDiv.innerHTML = `<div class="result-box">⏳ Kaydediliyor...</div>`;
+
+          // İsim -> personel.id eşleştirmesi; dosyada geçip sistemde hesabı olmayan
+          // öğretmenler için otomatik hesap açılır (ders programı yüklemesiyle tutarlı).
+          const { data: mevcutPersonel } = await db.from('personel').select('id, ad_soyad').eq('kurum_id', currentPersonel.kurum_id);
+          const personelMap = {};
+          (mevcutPersonel || []).forEach(p => { personelMap[p.ad_soyad] = p.id; });
+
+          const tumIsimler = new Set();
+          Object.values(newDuty).forEach(d => { tumIsimler.add(d.bahce); tumIsimler.add(d.bina); });
+          const yeniHesapAcilanlar = [];
+          for (const ad of tumIsimler) {
+            if (!ad || personelMap[ad]) continue;
+            try {
+              const sonuc = await callEdgeFunction('create-personel-account', { kurum_id: currentPersonel.kurum_id, ad_soyad: ad, rol: 'ogretmen' });
+              personelMap[ad] = sonuc.personel_id;
+              yeniHesapAcilanlar.push(`${ad} (şifre: ${sonuc.gecici_sifre})`);
+            } catch (err) { /* hesap açılamazsa bu kişinin nöbetleri aşağıda atlanır */ }
+          }
+
+          const nobetRows = Object.entries(newDuty)
+            .filter(([, d]) => personelMap[d.bahce] && personelMap[d.bina])
+            .map(([tarih, d]) => ({
+              kurum_id: currentPersonel.kurum_id, tarih,
+              bahce_ogretmen_id: personelMap[d.bahce], bina_ogretmen_id: personelMap[d.bina]
+            }));
+
+          await db.from('nobet_cizelgesi').delete().eq('kurum_id', currentPersonel.kurum_id);
+          if (nobetRows.length) {
+            const { error } = await db.from('nobet_cizelgesi').insert(nobetRows);
+            if (error) throw error;
+          }
+
+          await loadDuty();
+          const toplam = nobetRows.length;
+          let msg = `✅ ${toplam} günlük nöbet kaydı güncellendi ve tüm kullanıcılara aktarıldı.<br><span style="font-size:0.75rem;">Kullanılan sayfalar: ${usedSheets.join(', ')}</span>`;
+          if (yeniHesapAcilanlar.length) {
+            msg += `<br><span style="font-size:0.78rem;">🆕 Otomatik hesap açılan yeni öğretmen(ler): ${yeniHesapAcilanlar.join(', ')}</span>`;
+          }
+          resDiv.innerHTML = `<div class="result-box" style="background:#f0fdf4; border-left-color: var(--success); color:#166534;">${msg}</div>`;
         } catch (err) {
-          resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Dosya okunamadı: ${err.message}</div>`;
+          resDiv.innerHTML = `<div class="result-box warning-box">⚠️ Kaydedilemedi: ${err.message}</div>`;
         }
       };
       reader.readAsArrayBuffer(file);
@@ -2093,21 +2272,10 @@
         </div>`;
     }
 
-    // --- 5. TAŞIMALI VE NÖBET NOTLARI (FIREBASE İLE TÜM KULLANICILARDA PAYLAŞIMLI) ---
+    // --- 5. TAŞIMALI VE NÖBET NOTLARI (SUPABASE İLE TÜM KULLANICILARDA PAYLAŞIMLI) ---
     document.getElementById('note-date').valueAsDate = new Date();
 
-    // Giriş sistemi kurulana kadar geçici çözüm: her tarayıcıya özel anonim bir kimlik.
-    // Not silme yetkisini bu kimliğe göre sınırlandırıyoruz; ileride gerçek kullanıcı id'siyle değiştirilecek.
-    function getDeviceId() {
-      let id = localStorage.getItem('personelDeviceId');
-      if (!id) {
-        id = (crypto.randomUUID ? crypto.randomUUID() : `dev-${Date.now()}-${Math.random().toString(16).slice(2)}`);
-        localStorage.setItem('personelDeviceId', id);
-      }
-      return id;
-    }
-
-    function saveDutyNote() {
+    async function saveDutyNote() {
       const d = document.getElementById('note-date').value;
       const s = document.getElementById('note-service').value.trim();
       const t = document.getElementById('note-text').value.trim();
@@ -2117,34 +2285,39 @@
         return;
       }
 
-      db.collection('notes').add({
-        date: d, service: s, note: t,
-        creatorId: getDeviceId(),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).then(() => {
-        document.getElementById('note-service').value = "";
-        document.getElementById('note-text').value = "";
-      }).catch(err => {
-        alert('Not kaydedilemedi: ' + err.message);
+      const { error } = await db.from('notlar').insert({
+        kurum_id: currentPersonel.kurum_id, tarih: d, servis: s, not_metni: t, olusturan_id: currentPersonel.id
       });
+      if (error) {
+        alert('Not kaydedilemedi: ' + error.message);
+        return;
+      }
+      document.getElementById('note-service').value = "";
+      document.getElementById('note-text').value = "";
+      await loadNotes();
+      renderNotesList();
     }
 
-    function deleteNote(id) {
+    async function deleteNote(id) {
       const note = notesCache.find(n => n.id === id);
-      if (!note || note.creatorId !== getDeviceId()) {
+      if (!note || note.creatorId !== currentPersonel.id) {
         alert('Bu notu yalnızca ekleyen kişi silebilir.');
         return;
       }
       if (!confirm('Bu notu silmek istediğinize emin misiniz?')) return;
-      db.collection('notes').doc(id).delete().catch(err => {
-        alert('Silinemedi: ' + err.message);
-      });
+      const { error } = await db.from('notlar').delete().eq('id', id);
+      if (error) {
+        alert('Silinemedi: ' + error.message);
+        return;
+      }
+      await loadNotes();
+      renderNotesList();
     }
 
     function renderNotesList() {
       const div = document.getElementById('saved-notes-list');
       const notes = notesCache;
-      const myId = getDeviceId();
+      const myId = currentPersonel.id;
 
       if (notes.length === 0) {
         div.innerHTML = `<p style="font-size:0.8rem; color:#64748b;">Henüz kayıtlı not bulunmuyor.</p>`;
